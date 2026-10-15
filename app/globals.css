@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+:root,
+:root[data-theme="dark"] {
+  --page: #0b0a10;
+  --card: #15131d;
+  --card2: #1f1c2b;
+  --line: #2a2638;
+  --ink: #f4f2fa;
+  --muted: #9a96b0;
+  --brand: #ff2d87;
+  --brand2: #8b5cf6;
+}
+
+:root[data-theme="light"] {
+  --page: #f6f5fa;
+  --card: #ffffff;
+  --card2: #efedf6;
+  --line: #e2dfec;
+  --ink: #17151f;
+  --muted: #6b6880;
+  --brand: #e11d74;
+  --brand2: #7c3aed;
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-card: var(--card);
+  --color-card2: var(--card2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+  --color-brand2: var(--brand2);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  transition: background 0.2s, color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+/* Telefonda yazı alanına dokununca sayfanın yakınlaşmasını önler */
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+button,
+a {
+  touch-action: manipulation;
+}
+
+.btn-brand {
+  background: linear-gradient(135deg, var(--brand), var(--brand2));
+  color: #fff;
+  transition: transform 0.15s, opacity 0.15s;
+}
+.btn-brand:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+.btn-brand:active {
+  transform: scale(0.97);
+}
+.btn-brand:disabled {
+  opacity: 0.45;
+  transform: none;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--brand), var(--brand2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

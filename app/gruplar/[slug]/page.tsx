@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import GrupIcerik from "./grup-icerik";
 
-export default function GrupSayfasi() {
+export default function Page() {
   return (
     <Suspense fallback={<div className="p-4 text-center text-muted">Yükleniyor...</div>}>
       <GrupIcerik />

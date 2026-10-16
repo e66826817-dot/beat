@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Chess, Square } from "chess.js";
 import { createClient } from "../../../../lib/supabase";
 import { hataCevir } from "../../../../components/PostCard";
@@ -21,12 +21,21 @@ type Oyun = {
   end_reason: string | null;
   last_move: string | null;
   draw_offer_by: string | null;
+  is_private: boolean;
+  invite_code: string | null;
+  time_base_sec: number;
+  increment_sec: number;
+  white_time_ms: number;
+  black_time_ms: number;
+  last_move_at: string;
   white: { username: string } | null;
   black: { username: string } | null;
 };
 
+type Mesaj = { id: string; user_id: string; body: string; created_at: string };
+
 const SORGU =
-  "id, creator_id, white_id, black_id, status, fen, pgn, turn, move_count, result, end_reason, last_move, draw_offer_by, white:profiles!chess_games_white_id_fkey(username), black:profiles!chess_games_black_id_fkey(username)";
+  "id, creator_id, white_id, black_id, status, fen, pgn, turn, move_count, result, end_reason, last_move, draw_offer_by, is_private, invite_code, time_base_sec, increment_sec, white_time_ms, black_time_ms, last_move_at, white:profiles!chess_games_white_id_fkey(username), black:profiles!chess_games_black_id_fkey(username)";
 
 const PARCA: Record<string, string> = {
   k: "♚",
@@ -38,13 +47,36 @@ const PARCA: Record<string, string> = {
 };
 const DOSYA = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
+const KALIPLAR = [
+  "İyi oyunlar! 🍀",
+  "Güzel hamle! 👏",
+  "Biraz bekle ⏳",
+  "Dikkat, şah! ♚",
+  "Hay aksi 😅",
+  "Berabere kabul eder misin? 🤝",
+  "Tebrikler! 🎉",
+  "Şanslıydın 😄",
+  "Tekrar oynayalım mı?",
+  "Teşekkürler, iyi maçtı 💖",
+];
+
+function saatMetni(ms: number) {
+  const sn = Math.max(0, Math.ceil(ms / 1000));
+  const dk = Math.floor(sn / 60);
+  const s = sn % 60;
+  return `${dk}:${s.toString().padStart(2, "0")}`;
+}
+
 export default function SatrancOyunu() {
   const supabase = createClient();
   const router = useRouter();
   const params = useParams<{ id: string }>();
+  const arama = useSearchParams();
   const id = params.id;
+  const kodParam = (arama.get("kod") || "").toUpperCase();
 
   const [oyun, setOyun] = useState<Oyun | null>(null);
+  const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
   const [benimId, setBenimId] = useState<string | null>(null);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [bulunamadi, setBulunamadi] = useState(false);
@@ -53,25 +85,38 @@ export default function SatrancOyunu() {
   const [terfi, setTerfi] = useState<{ from: Square; to: Square } | null>(null);
   const [isleniyor, setIsleniyor] = useState(false);
   const [kopyalandi, setKopyalandi] = useState(false);
+  const [fark, setFark] = useState(0);
+  const [simdi, setSimdi] = useState(Date.now());
+  const [yazi, setYazi] = useState("");
   const durumRef = useRef<string>("");
+  const sonZamanAsimi = useRef(0);
+  const mesajKutusu = useRef<HTMLDivElement>(null);
 
   async function getir() {
-    const { data, error } = await supabase
-      .from("chess_games")
-      .select(SORGU)
-      .eq("id", id)
-      .maybeSingle();
-    if (error) {
-      setHata(error.message);
+    const [o, s] = await Promise.all([
+      supabase.from("chess_games").select(SORGU).eq("id", id).maybeSingle(),
+      supabase.rpc("sunucu_simdi"),
+    ]);
+    if (s.data) setFark(new Date(s.data as string).getTime() - Date.now());
+    if (o.error) {
+      setHata(o.error.message);
       return;
     }
-    if (!data) {
+    if (!o.data) {
       setBulunamadi(true);
       return;
     }
-    const o = data as unknown as Oyun;
-    durumRef.current = o.status;
-    setOyun(o);
+    const g = o.data as unknown as Oyun;
+    durumRef.current = g.status;
+    setOyun(g);
+
+    const { data: m } = await supabase
+      .from("chess_messages")
+      .select("id, user_id, body, created_at")
+      .eq("game_id", id)
+      .order("created_at", { ascending: true })
+      .limit(100);
+    setMesajlar((m as Mesaj[]) || []);
   }
 
   useEffect(() => {
@@ -87,11 +132,18 @@ export default function SatrancOyunu() {
       }, 2500);
     }
     baslat();
+    const saat = setInterval(() => setSimdi(Date.now()), 250);
     return () => {
       if (sayac) clearInterval(sayac);
+      clearInterval(saat);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    const kutu = mesajKutusu.current;
+    if (kutu) kutu.scrollTop = kutu.scrollHeight;
+  }, [mesajlar.length]);
 
   const satranc = useMemo(() => {
     const c = new Chess();
@@ -114,8 +166,31 @@ export default function SatrancOyunu() {
         : null
       : null;
 
+  // Saat: sunucudaki süre eksi, son hamleden bu yana geçen süre
+  function kalanMs(r: "w" | "b") {
+    if (!oyun) return 0;
+    const taban = r === "w" ? oyun.white_time_ms : oyun.black_time_ms;
+    if (oyun.status !== "active" || oyun.turn !== r) return taban;
+    const gecen = simdi + fark - new Date(oyun.last_move_at).getTime();
+    return Math.max(0, taban - gecen);
+  }
+
+  // Süresi biten tarafı sunucuya bildir
+  useEffect(() => {
+    if (!oyun || oyun.status !== "active" || !renk) return;
+    if (kalanMs(oyun.turn) > 0) return;
+    if (Date.now() - sonZamanAsimi.current < 3000) return;
+    sonZamanAsimi.current = Date.now();
+    supabase.rpc("satranc_zaman_asimi", { gid: oyun.id }).then(() => getir());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [simdi]);
+
   const sirabende =
-    !!oyun && oyun.status === "active" && !!renk && oyun.turn === renk;
+    !!oyun &&
+    oyun.status === "active" &&
+    !!renk &&
+    oyun.turn === renk &&
+    kalanMs(renk) > 0;
 
   const hamleler = secili ? satranc.moves({ square: secili, verbose: true }) : [];
 
@@ -196,6 +271,20 @@ export default function SatrancOyunu() {
     setIsleniyor(false);
   }
 
+  async function ozelKatil() {
+    setHata("");
+    setIsleniyor(true);
+    const { error } = await supabase.rpc("satranc_katil", { gid: id, kod: kodParam });
+    if (error) {
+      setHata(hataCevir(error.message));
+      setIsleniyor(false);
+      return;
+    }
+    setBulunamadi(false);
+    await getir();
+    setIsleniyor(false);
+  }
+
   async function teslimOl() {
     if (!oyun) return;
     if (!window.confirm("Teslim olmak istediğine emin misin?")) return;
@@ -215,13 +304,31 @@ export default function SatrancOyunu() {
     router.push("/oyunlar/satranc");
   }
 
+  async function mesajGonder(metin: string) {
+    const t = metin.trim();
+    if (!t || !benimId || !oyun) return;
+    setHata("");
+    const { error } = await supabase
+      .from("chess_messages")
+      .insert({ game_id: oyun.id, user_id: benimId, body: t });
+    if (error) {
+      setHata(hataCevir(error.message));
+      return;
+    }
+    setYazi("");
+    await getir();
+  }
+
   async function linkKopyala() {
+    const adres = oyun?.is_private
+      ? `${window.location.origin}/oyunlar/satranc/${id}?kod=${oyun.invite_code}`
+      : window.location.href;
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(adres);
       setKopyalandi(true);
       setTimeout(() => setKopyalandi(false), 2000);
     } catch {
-      setHata("Link kopyalanamadı: " + window.location.href);
+      setHata("Link kopyalanamadı: " + adres);
     }
   }
 
@@ -236,8 +343,30 @@ export default function SatrancOyunu() {
   if (bulunamadi || !oyun) {
     return (
       <main className="mx-auto flex max-w-md flex-col items-center gap-3 p-10 text-center">
-        <p className="text-4xl">♟️</p>
-        <p className="text-muted">Bu oyun bulunamadı ya da iptal edildi.</p>
+        <p className="text-4xl">{kodParam ? "🔒" : "♟️"}</p>
+        {kodParam && benimId ? (
+          <>
+            <p className="text-muted">Bu özel bir oda. Katılmak ister misin?</p>
+            {hata && <p className="text-sm text-yellow-500">{hata}</p>}
+            <button
+              onClick={ozelKatil}
+              disabled={isleniyor}
+              className="btn-brand rounded-xl px-6 py-3 font-semibold"
+            >
+              Odaya katıl
+            </button>
+          </>
+        ) : kodParam ? (
+          <p className="text-muted">
+            Özel odaya katılmak için{" "}
+            <Link href="/giris" className="text-brand hover:underline">
+              giriş yap
+            </Link>
+            .
+          </p>
+        ) : (
+          <p className="text-muted">Bu oyun bulunamadı, süresi doldu ya da iptal edildi.</p>
+        )}
         <Link href="/oyunlar/satranc" className="text-brand hover:underline">
           Satranç lobisi
         </Link>
@@ -265,8 +394,34 @@ export default function SatrancOyunu() {
   const beyazAd = oyun.white?.username ?? "bekleniyor";
   const siyahAd = oyun.black?.username ?? "bekleniyor";
   const ustRenk = asagidaki === "w" ? "b" : "w";
-  const adGoster = (r: "w" | "b") =>
-    `${r === "w" ? "⚪" : "⚫"} ${r === "w" ? beyazAd : siyahAd}`;
+
+  function oyuncuSatiri(r: "w" | "b") {
+    const aktif = oyun!.status === "active" && oyun!.turn === r;
+    const ms = kalanMs(r);
+    return (
+      <div
+        className={`flex items-center justify-between rounded-2xl border bg-card px-4 py-2 text-sm font-semibold ${
+          aktif ? "border-brand" : "border-line"
+        }`}
+      >
+        <span className="truncate">
+          {r === "w" ? "⚪" : "⚫"} {r === "w" ? beyazAd : siyahAd}
+          {renk === null && r === asagidaki && (
+            <span className="ml-2 text-xs font-normal text-muted">(izleyici)</span>
+          )}
+        </span>
+        <span
+          className={`rounded-lg px-3 py-1 font-mono text-base ${
+            ms < 30000 && oyun!.status === "active"
+              ? "bg-red-500/20 text-red-400"
+              : "bg-card2"
+          }`}
+        >
+          {saatMetni(ms)}
+        </span>
+      </div>
+    );
+  }
 
   const gecmis = satranc.history();
   const hamleCiftleri: string[] = [];
@@ -279,6 +434,10 @@ export default function SatrancOyunu() {
   const katilimci = renk !== null;
   const teklifBende = oyun.draw_offer_by === benimId;
   const teklifRakipte = !!oyun.draw_offer_by && !teklifBende;
+  const sohbetAcik = katilimci && !!oyun.white_id && !!oyun.black_id;
+  const adlar: Record<string, string> = {};
+  if (oyun.white_id) adlar[oyun.white_id] = beyazAd;
+  if (oyun.black_id) adlar[oyun.black_id] = siyahAd;
 
   let durumSatiri = "";
   if (oyun.status === "waiting") {
@@ -303,9 +462,14 @@ export default function SatrancOyunu() {
         ← Satranç lobisi
       </Link>
 
-      <div className="rounded-2xl border border-line bg-card px-4 py-2 text-sm font-semibold">
-        {adGoster(ustRenk)}
-      </div>
+      {oyun.is_private && (
+        <p className="text-xs text-muted">
+          🔒 Özel oda · ⏱ {Math.round(oyun.time_base_sec / 60)}
+          {oyun.increment_sec ? `+${oyun.increment_sec}` : " dk"}
+        </p>
+      )}
+
+      {oyuncuSatiri(ustRenk)}
 
       <div className="grid w-full grid-cols-8 overflow-hidden rounded-2xl border border-line">
         {siralar.map((r) =>
@@ -400,12 +564,7 @@ export default function SatrancOyunu() {
         )}
       </div>
 
-      <div className="rounded-2xl border border-line bg-card px-4 py-2 text-sm font-semibold">
-        {adGoster(asagidaki)}
-        {renk === null && (
-          <span className="ml-2 text-xs font-normal text-muted">(izleyici)</span>
-        )}
-      </div>
+      {oyuncuSatiri(asagidaki)}
 
       <div
         className={`rounded-2xl border bg-card p-3 text-center text-sm font-semibold ${
@@ -448,8 +607,19 @@ export default function SatrancOyunu() {
 
       {oyun.status === "waiting" && (
         <div className="space-y-2 rounded-2xl border border-line bg-card p-3">
+          {oyun.is_private && benimId === oyun.creator_id && (
+            <div className="rounded-xl bg-card2 p-3 text-center">
+              <p className="text-xs text-muted">Oda kodu</p>
+              <p className="font-mono text-3xl font-extrabold tracking-[0.3em]">
+                {oyun.invite_code}
+              </p>
+            </div>
+          )}
           <p className="text-sm text-muted">
-            Linki arkadaşına gönder ya da lobide bekleyenler arasında görünsün.
+            {oyun.is_private
+              ? "Kodu ya da linki sadece oynamak istediğin kişiyle paylaş."
+              : "Linki arkadaşına gönder ya da lobide bekleyenler arasında görünsün."}{" "}
+            Rakip gelmezse oda 15 dakikada kapanır.
           </p>
           <div className="flex flex-wrap gap-2">
             <button
@@ -466,7 +636,7 @@ export default function SatrancOyunu() {
                 İptal et
               </button>
             )}
-            {benimId && benimId !== oyun.creator_id && (
+            {benimId && benimId !== oyun.creator_id && !oyun.is_private && (
               <button
                 onClick={() => rpc("satranc_katil", { gid: oyun.id })}
                 disabled={isleniyor}
@@ -527,6 +697,79 @@ export default function SatrancOyunu() {
               🏳️ Teslim ol
             </button>
           </div>
+        </div>
+      )}
+
+      {sohbetAcik && (
+        <div className="space-y-2 rounded-2xl border border-line bg-card p-3">
+          <p className="text-xs font-semibold text-muted">💬 Sohbet</p>
+          <div
+            ref={mesajKutusu}
+            className="max-h-44 space-y-1.5 overflow-y-auto rounded-xl bg-card2 p-2"
+          >
+            {mesajlar.length === 0 && (
+              <p className="p-2 text-center text-xs text-muted">
+                Henüz mesaj yok. Hazır mesajlardan birini gönder!
+              </p>
+            )}
+            {mesajlar.map((m) => {
+              const ben = m.user_id === benimId;
+              return (
+                <div
+                  key={m.id}
+                  className={`flex ${ben ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded-2xl px-3 py-1.5 text-sm ${
+                      ben ? "btn-brand" : "bg-card"
+                    }`}
+                  >
+                    {!ben && (
+                      <p className="text-[10px] font-semibold opacity-70">
+                        {adlar[m.user_id] ?? "?"}
+                      </p>
+                    )}
+                    {m.body}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            {KALIPLAR.map((k) => (
+              <button
+                key={k}
+                onClick={() => mesajGonder(k)}
+                className="shrink-0 rounded-full bg-card2 px-3 py-1.5 text-xs font-semibold text-muted hover:text-ink"
+              >
+                {k}
+              </button>
+            ))}
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              mesajGonder(yazi);
+            }}
+            className="flex gap-2"
+          >
+            <input
+              value={yazi}
+              onChange={(e) => setYazi(e.target.value)}
+              placeholder="Mesaj yaz..."
+              maxLength={200}
+              className="min-w-0 flex-1 rounded-2xl bg-card2 p-3 text-sm text-ink outline-none placeholder:text-muted focus:ring-2 focus:ring-brand"
+            />
+            <button
+              type="submit"
+              disabled={!yazi.trim()}
+              className="btn-brand rounded-2xl px-4 py-2 text-sm font-semibold"
+            >
+              Gönder
+            </button>
+          </form>
         </div>
       )}
 

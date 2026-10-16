@@ -14,13 +14,28 @@ type Oyun = {
   black_id: string | null;
   result: "white" | "black" | "draw" | null;
   move_count: number;
-  updated_at: string;
+  time_base_sec: number;
+  increment_sec: number;
+  is_private: boolean;
   white: { username: string } | null;
   black: { username: string } | null;
 };
 
 const SORGU =
-  "id, status, creator_id, white_id, black_id, result, move_count, updated_at, white:profiles!chess_games_white_id_fkey(username), black:profiles!chess_games_black_id_fkey(username)";
+  "id, status, creator_id, white_id, black_id, result, move_count, time_base_sec, increment_sec, is_private, white:profiles!chess_games_white_id_fkey(username), black:profiles!chess_games_black_id_fkey(username)";
+
+const SURELER = [
+  { etiket: "3 dk", sure: 180, artis: 0 },
+  { etiket: "5 dk", sure: 300, artis: 0 },
+  { etiket: "10 dk", sure: 600, artis: 0 },
+  { etiket: "10+5", sure: 600, artis: 5 },
+  { etiket: "15+10", sure: 900, artis: 10 },
+];
+
+function sureEtiketi(o: { time_base_sec: number; increment_sec: number }) {
+  const dk = Math.round(o.time_base_sec / 60);
+  return o.increment_sec ? `${dk}+${o.increment_sec}` : `${dk} dk`;
+}
 
 export default function SatrancLobisi() {
   const supabase = createClient();
@@ -31,15 +46,18 @@ export default function SatrancLobisi() {
   const [yukleniyor, setYukleniyor] = useState(true);
   const [hata, setHata] = useState("");
   const [renk, setRenk] = useState("random");
+  const [sureIdx, setSureIdx] = useState(2);
+  const [ozel, setOzel] = useState(false);
+  const [kod, setKod] = useState("");
   const [islem, setIslem] = useState(false);
 
   async function getir(kullaniciId: string | null) {
-    const birGun = new Date(Date.now() - 86400000).toISOString();
+    await supabase.rpc("satranc_temizle");
     const { data: b, error } = await supabase
       .from("chess_games")
       .select(SORGU)
       .eq("status", "waiting")
-      .gt("created_at", birGun)
+      .eq("is_private", false)
       .order("created_at", { ascending: false })
       .limit(30);
     if (error) setHata(error.message);
@@ -49,9 +67,9 @@ export default function SatrancLobisi() {
       const { data: m } = await supabase
         .from("chess_games")
         .select(SORGU)
-        .or(`white_id.eq.${kullaniciId},black_id.eq.${kullaniciId}`)
+        .or(`white_id.eq.${kullaniciId},black_id.eq.${kullaniciId},creator_id.eq.${kullaniciId}`)
         .order("updated_at", { ascending: false })
-        .limit(20);
+        .limit(15);
       setBenim((m as unknown as Oyun[]) || []);
     }
   }
@@ -64,7 +82,9 @@ export default function SatrancLobisi() {
       setUid(id);
       await getir(id);
       setYukleniyor(false);
-      sayac = setInterval(() => getir(id), 5000);
+      sayac = setInterval(() => {
+        if (!document.hidden) getir(id);
+      }, 5000);
     }
     baslat();
     return () => {
@@ -77,7 +97,13 @@ export default function SatrancLobisi() {
     if (islem) return;
     setHata("");
     setIslem(true);
-    const { data, error } = await supabase.rpc("satranc_olustur", { renk });
+    const s = SURELER[sureIdx];
+    const { data, error } = await supabase.rpc("satranc_olustur", {
+      renk,
+      sure: s.sure,
+      artis: s.artis,
+      ozel,
+    });
     setIslem(false);
     if (error) {
       setHata(hataCevir(error.message));
@@ -100,11 +126,27 @@ export default function SatrancLobisi() {
     router.push(`/oyunlar/satranc/${id}`);
   }
 
+  async function kodlaKatil(e: React.FormEvent) {
+    e.preventDefault();
+    if (islem || !kod.trim()) return;
+    setHata("");
+    setIslem(true);
+    const { data, error } = await supabase.rpc("satranc_kodla_katil", {
+      kod: kod.trim(),
+    });
+    setIslem(false);
+    if (error) {
+      setHata(hataCevir(error.message));
+      return;
+    }
+    router.push(`/oyunlar/satranc/${data as string}`);
+  }
+
   function durumMetni(o: Oyun) {
     if (o.status === "waiting") return "Rakip bekleniyor";
     if (o.status === "active") return `Devam ediyor · ${o.move_count} hamle`;
     if (o.result === "draw") return "Berabere";
-    if (!o.result) return "Süresi doldu";
+    if (!o.result) return "Bitti";
     const kazanan = o.result === "white" ? o.white?.username : o.black?.username;
     return `${kazanan ?? "?"} kazandı`;
   }
@@ -118,6 +160,8 @@ export default function SatrancLobisi() {
   }
 
   const baskalari = bekleyen.filter((o) => o.creator_id !== uid);
+  const acik = benim.find((o) => o.status !== "finished");
+  const bitenler = benim.filter((o) => o.status === "finished").slice(0, 5);
 
   return (
     <main className="mx-auto max-w-2xl space-y-4 p-4">
@@ -128,7 +172,8 @@ export default function SatrancLobisi() {
       <section className="btn-brand rounded-3xl p-6">
         <h2 className="text-2xl font-extrabold">♟️ Satranç</h2>
         <p className="mt-1 text-sm opacity-90">
-          Yeni oyun aç, linkini paylaş ya da aşağıdan bir oyuna katıl.
+          Saatli, online. Herkese açık oyun aç ya da özel oda kurup kodu
+          arkadaşına ver.
         </p>
       </section>
 
@@ -138,9 +183,49 @@ export default function SatrancLobisi() {
         </p>
       )}
 
-      {uid ? (
+      {!uid && (
+        <p className="rounded-2xl border border-line bg-card p-3 text-sm text-muted">
+          Oynamak için{" "}
+          <Link href="/giris" className="text-brand hover:underline">
+            giriş yap
+          </Link>
+          .
+        </p>
+      )}
+
+      {uid && acik && (
+        <Link
+          href={`/oyunlar/satranc/${acik.id}`}
+          className="block rounded-3xl border border-brand bg-card p-4 transition hover:-translate-y-0.5"
+        >
+          <p className="font-bold">
+            {acik.status === "active" ? "♟️ Devam eden oyunun var" : "⏳ Açık odan var"}
+          </p>
+          <p className="text-sm text-muted">
+            {acik.is_private ? "🔒 Özel oda · " : ""}
+            {sureEtiketi(acik)} · {durumMetni(acik)} → oyuna dön
+          </p>
+        </Link>
+      )}
+
+      {uid && !acik && (
         <section className="space-y-3 rounded-3xl border border-line bg-card p-4">
           <h3 className="font-bold">Yeni oyun</h3>
+
+          <div className="flex flex-wrap gap-2">
+            {SURELER.map((s, i) => (
+              <button
+                key={s.etiket}
+                onClick={() => setSureIdx(i)}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  sureIdx === i ? "btn-brand" : "bg-card2 text-muted hover:text-ink"
+                }`}
+              >
+                ⏱ {s.etiket}
+              </button>
+            ))}
+          </div>
+
           <div className="flex flex-wrap gap-2">
             {(
               [
@@ -160,26 +245,56 @@ export default function SatrancLobisi() {
               </button>
             ))}
           </div>
+
+          <label className="flex cursor-pointer items-center gap-3 rounded-2xl bg-card2 p-3 text-sm">
+            <input
+              type="checkbox"
+              checked={ozel}
+              onChange={(e) => setOzel(e.target.checked)}
+              className="h-5 w-5"
+            />
+            <span>
+              🔒 <b>Özel oda</b>
+              <span className="block text-xs text-muted">
+                Lobide görünmez, sadece kodu bilen katılır.
+              </span>
+            </span>
+          </label>
+
           <button
             onClick={olustur}
             disabled={islem}
             className="btn-brand w-full rounded-xl p-3 font-semibold"
           >
-            {islem ? "Açılıyor..." : "Oyun aç"}
+            {islem ? "Açılıyor..." : ozel ? "Özel oda kur" : "Oyun aç"}
           </button>
           <p className="text-xs text-muted">
-            En fazla 3 açık oyunun olabilir. Görevlerde sayılması için maçın
-            en az 10 hamle sürmesi gerekir.
+            Aynı anda tek açık oyunun olabilir. Süren dolarsan oyun kaybedilmiş
+            sayılır, rakip gelmeyen oda 15 dakikada kapanır.
           </p>
         </section>
-      ) : (
-        <p className="rounded-2xl border border-line bg-card p-3 text-sm text-muted">
-          Oynamak için{" "}
-          <Link href="/giris" className="text-brand hover:underline">
-            giriş yap
-          </Link>
-          .
-        </p>
+      )}
+
+      {uid && !acik && (
+        <form
+          onSubmit={kodlaKatil}
+          className="flex gap-2 rounded-3xl border border-line bg-card p-4"
+        >
+          <input
+            value={kod}
+            onChange={(e) => setKod(e.target.value.toUpperCase())}
+            placeholder="Özel oda kodu"
+            maxLength={6}
+            className="min-w-0 flex-1 rounded-2xl bg-card2 p-3 uppercase tracking-widest text-ink outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-muted focus:ring-2 focus:ring-brand"
+          />
+          <button
+            type="submit"
+            disabled={islem || kod.trim().length < 6}
+            className="btn-brand rounded-xl px-5 py-2 text-sm font-semibold"
+          >
+            Kodla katıl
+          </button>
+        </form>
       )}
 
       <section className="space-y-2">
@@ -201,10 +316,11 @@ export default function SatrancLobisi() {
                   @{sahip?.username ?? "?"}
                 </p>
                 <p className="text-xs text-muted">
+                  ⏱ {sureEtiketi(o)} ·{" "}
                   {o.white_id ? "⚪ Beyaz olarak bekliyor" : "⚫ Siyah olarak bekliyor"}
                 </p>
               </div>
-              {uid && (
+              {uid && !acik && (
                 <button
                   onClick={() => katil(o.id)}
                   disabled={islem}
@@ -218,15 +334,10 @@ export default function SatrancLobisi() {
         })}
       </section>
 
-      {uid && (
+      {uid && bitenler.length > 0 && (
         <section className="space-y-2">
-          <h3 className="font-bold">Oyunlarım</h3>
-          {benim.length === 0 && (
-            <div className="rounded-3xl border border-dashed border-line py-8 text-center text-sm text-muted">
-              Henüz oyunun yok.
-            </div>
-          )}
-          {benim.map((o) => {
+          <h3 className="font-bold">Son oyunlarım</h3>
+          {bitenler.map((o) => {
             const rakip =
               o.white_id === uid ? o.black?.username : o.white?.username;
             return (
@@ -235,14 +346,14 @@ export default function SatrancLobisi() {
                 href={`/oyunlar/satranc/${o.id}`}
                 className="flex items-center gap-3 rounded-2xl border border-line bg-card p-3 transition hover:-translate-y-0.5"
               >
-                <span className="text-2xl">
-                  {o.status === "active" ? "♟️" : o.status === "waiting" ? "⏳" : "🏁"}
-                </span>
+                <span className="text-2xl">🏁</span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">
-                    {rakip ? `@${rakip} ile` : "Rakip bekleniyor"}
+                    {rakip ? `@${rakip} ile` : "Rakipsiz"}
                   </p>
-                  <p className="text-xs text-muted">{durumMetni(o)}</p>
+                  <p className="text-xs text-muted">
+                    {sureEtiketi(o)} · {durumMetni(o)}
+                  </p>
                 </div>
               </Link>
             );

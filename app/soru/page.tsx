@@ -8,6 +8,7 @@ import PostCard, {
   Gonderi,
   GONDERI_SORGUSU,
   gonderiDuzenle,
+  hataCevir,
 } from "../../components/PostCard";
 
 type Soru = { id: string; question: string; created_at: string };
@@ -83,8 +84,14 @@ export default function SoruSayfasi() {
       question_id: soru.id,
       content: metin.trim(),
     });
-    if (error) setHata(error.message);
-    else {
+    if (error) {
+      setHata(
+        error.code === "23505"
+          ? "Bu soruya zaten cevap verdin."
+          : hataCevir(error.message)
+      );
+      await cevaplariGetir(soru.id);
+    } else {
       setMetin("");
       await cevaplariGetir(soru.id);
     }
@@ -94,11 +101,13 @@ export default function SoruSayfasi() {
   if (yukleniyor) {
     return (
       <main className="mx-auto max-w-2xl space-y-3 p-4">
-        <div className="h-40 animate-pulse rounded-2xl border border-line bg-card" />
-        <div className="h-24 animate-pulse rounded-2xl border border-line bg-card" />
+        <div className="h-40 animate-pulse rounded-3xl border border-line bg-card" />
+        <div className="h-24 animate-pulse rounded-3xl border border-line bg-card" />
       </main>
     );
   }
+
+  const benimCevabim = cevaplar.find((c) => c.user_id === kullaniciId);
 
   return (
     <main className="mx-auto max-w-2xl space-y-4 p-4">
@@ -107,7 +116,7 @@ export default function SoruSayfasi() {
       </Link>
 
       {!soru ? (
-        <div className="rounded-2xl border border-dashed border-line py-12 text-center text-muted">
+        <div className="rounded-3xl border border-dashed border-line py-12 text-center text-muted">
           <p className="text-4xl">💭</p>
           <p className="mt-2 px-4">Bugün için henüz bir soru yok. Yakında!</p>
           {admin && (
@@ -121,30 +130,42 @@ export default function SoruSayfasi() {
         </div>
       ) : (
         <>
-          <section className="btn-brand rounded-2xl p-6">
+          <section className="btn-brand rounded-3xl p-6">
             <p className="text-xs font-semibold uppercase tracking-wide opacity-90">
               💭 Günün sorusu
             </p>
             <h2 className="mt-1 text-2xl font-extrabold">{soru.question}</h2>
-            <p className="mt-2 text-sm opacity-90">
-              {cevaplar.length} cevap
-            </p>
+            <p className="mt-2 text-sm opacity-90">{cevaplar.length} cevap</p>
           </section>
 
-          {kullaniciId ? (
+          {!kullaniciId ? (
+            <p className="rounded-2xl border border-line bg-card p-3 text-sm text-muted">
+              Cevap yazmak için{" "}
+              <Link href="/giris" className="text-brand hover:underline">
+                giriş yap
+              </Link>
+              .
+            </p>
+          ) : benimCevabim ? (
+            <p className="rounded-2xl border border-line bg-card p-3 text-sm text-muted">
+              ✓ Bu soruya cevap verdin. Her soruya bir cevap hakkın var; cevabını
+              kartın ⋯ menüsünden düzenleyebilir ya da silip yeniden
+              yazabilirsin.
+            </p>
+          ) : (
             <form
               onSubmit={cevapla}
-              className="space-y-3 rounded-2xl border border-line bg-card p-4"
+              className="space-y-3 rounded-3xl border border-line bg-card p-4"
             >
               <div className="flex gap-3">
                 <Avatar url={avatarUrl} ad={kullaniciAdi || "?"} />
                 <textarea
                   value={metin}
                   onChange={(e) => setMetin(e.target.value)}
-                  placeholder="Cevabını yaz..."
+                  placeholder="Cevabını yaz (tek hakkın var)..."
                   maxLength={300}
                   rows={3}
-                  className="w-full resize-none rounded-xl bg-card2 p-3 text-ink outline-none placeholder:text-muted focus:ring-2 focus:ring-brand"
+                  className="min-w-0 flex-1 resize-none rounded-2xl bg-card2 p-3 text-ink outline-none placeholder:text-muted focus:ring-2 focus:ring-brand"
                 />
               </div>
               <div className="flex items-center justify-end gap-3">
@@ -152,31 +173,23 @@ export default function SoruSayfasi() {
                 <button
                   type="submit"
                   disabled={!metin.trim() || gonderiliyor}
-                  className="btn-brand rounded-lg px-5 py-2 text-sm font-semibold"
+                  className="btn-brand rounded-xl px-5 py-2 text-sm font-semibold"
                 >
                   {gonderiliyor ? "Gönderiliyor..." : "Cevapla"}
                 </button>
               </div>
             </form>
-          ) : (
-            <p className="rounded-xl border border-line bg-card p-3 text-sm text-muted">
-              Cevap yazmak için{" "}
-              <Link href="/giris" className="text-brand hover:underline">
-                giriş yap
-              </Link>
-              .
-            </p>
           )}
 
           {hata && (
-            <p className="rounded-xl border border-line bg-card p-3 text-sm text-yellow-500">
+            <p className="rounded-2xl border border-line bg-card p-3 text-sm text-yellow-500">
               {hata}
             </p>
           )}
 
           <div className="space-y-3">
             {cevaplar.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-line py-10 text-center text-muted">
+              <div className="rounded-3xl border border-dashed border-line py-10 text-center text-muted">
                 <p className="text-4xl">🎶</p>
                 <p className="mt-2">İlk cevabı sen yaz!</p>
               </div>

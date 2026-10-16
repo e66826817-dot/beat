@@ -443,14 +443,20 @@ export default function ProfilSayfasi() {
               )}
 
               <div className="flex gap-5 text-sm">
-                <span>
+                                <Link
+                  href={`/profil/${profil.username}/takipciler`}
+                  className="hover:text-brand"
+                >
                   <b>{takipciSayisi}</b>{" "}
                   <span className="text-muted">takipçi</span>
-                </span>
-                <span>
+                </Link>
+                <Link
+                  href={`/profil/${profil.username}/takip`}
+                  className="hover:text-brand"
+                >
                   <b>{takipSayisi}</b>{" "}
                   <span className="text-muted">takip</span>
-                </span>
+                </Link>
                 <span>
                   <b>{kendiGonderileri.length}</b>{" "}
                   <span className="text-muted">gönderi</span>
@@ -476,6 +482,9 @@ export default function ProfilSayfasi() {
                     className="rounded-full bg-card2 px-4 py-2 font-semibold text-brand hover:opacity-80"
                   >
                     🎯 Görevler
+                  </Link>
+                                    <Link href="/kaydedilenler" className={kucukBtn}>
+                    🔖 Kaydedilenler
                   </Link>
                   <Link href="/engellenenler" className={kucukBtn}>
                     🚫 Engellenenler

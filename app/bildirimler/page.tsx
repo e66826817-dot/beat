@@ -18,11 +18,13 @@ type Bildirim = {
   id: string;
   type: Tur;
   post_id: string | null;
+  ref_id: string | null;
   info: string | null;
   is_read: boolean;
   created_at: string;
   profiles: { username: string } | null;
   posts: { content: string | null } | null;
+  ref: { content: string | null } | null;
 };
 
 const IKONLAR: Record<Tur, string> = {
@@ -66,7 +68,7 @@ export default function BildirimlerSayfasi() {
       const { data, error } = await supabase
         .from("notifications")
         .select(
-          "id, type, post_id, info, is_read, created_at, profiles!notifications_actor_id_fkey(username), posts!notifications_post_id_fkey(content)"
+          "id, type, post_id, ref_id, info, is_read, created_at, profiles!notifications_actor_id_fkey(username), posts!notifications_post_id_fkey(content), ref:posts!notifications_ref_id_fkey(content)"
         )
         .order("created_at", { ascending: false })
         .limit(50);
@@ -94,7 +96,7 @@ export default function BildirimlerSayfasi() {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-16 animate-pulse rounded-2xl border border-line bg-card"
+            className="h-16 animate-pulse rounded-3xl border border-line bg-card"
           />
         ))}
       </main>
@@ -118,13 +120,13 @@ export default function BildirimlerSayfasi() {
       <h2 className="text-2xl font-extrabold">Bildirimler</h2>
 
       {hata && (
-        <p className="rounded-xl border border-line bg-card p-3 text-sm text-yellow-500">
+        <p className="rounded-2xl border border-line bg-card p-3 text-sm text-yellow-500">
           {hata}
         </p>
       )}
 
       {bildirimler.length === 0 && !hata && (
-        <div className="rounded-2xl border border-dashed border-line py-12 text-center text-muted">
+        <div className="rounded-3xl border border-dashed border-line py-12 text-center text-muted">
           <p className="text-4xl">🔔</p>
           <p className="mt-2 px-4">
             Henüz bildirim yok. Biri gönderine tepki verince, yorum yapınca,
@@ -137,19 +139,24 @@ export default function BildirimlerSayfasi() {
       <div className="space-y-2">
         {bildirimler.map((b) => {
           const kisi = b.profiles?.username ?? "bilinmiyor";
+          const hedefId = b.type === "quote" && b.ref_id ? b.ref_id : b.post_id;
           const hedef =
             b.type === "follow" || b.type === "title_worn"
               ? `/profil/${kisi}`
-              : b.post_id
-              ? `/gonderi/${b.post_id}`
+              : hedefId
+              ? `/gonderi/${hedefId}`
               : "/";
           const altMetin =
-            b.type === "title_worn" ? b.info : b.posts?.content ?? null;
+            b.type === "title_worn"
+              ? b.info
+              : b.type === "quote"
+              ? b.ref?.content ?? b.posts?.content ?? null
+              : b.posts?.content ?? null;
           return (
             <Link
               key={b.id}
               href={hedef}
-              className={`flex items-start gap-3 rounded-2xl border bg-card p-4 transition hover:-translate-y-0.5 ${
+              className={`flex items-start gap-3 rounded-3xl border bg-card p-4 transition hover:-translate-y-0.5 ${
                 b.is_read ? "border-line" : "border-brand"
               }`}
             >

@@ -391,6 +391,7 @@ export default function PostCard({
   const duzenleyebilir = !!kullaniciId && g.user_id === kullaniciId;
   const orijinalEngelli = !!g.original && engelli.has(g.original.user_id);
   const yorumSabitleyebilir = admin || g.user_id === kullaniciId;
+    const alintiSayisi = g.reposts.filter((r) => !safMi(r)).length;
 
   const tepkiSayilari = TEPKILER.map((e) => ({
     emoji: e,
@@ -1054,7 +1055,14 @@ export default function PostCard({
           ))}
         </div>
       )}
-
+            {alintiSayisi > 0 && (
+        <Link
+          href={`/gonderi/${g.id}/alintilar`}
+          className="mt-3 inline-block text-sm font-semibold text-brand hover:underline"
+        >
+          ✍️ {alintiSayisi} alıntı
+        </Link>
+      )}
       <div className="mt-3 flex items-center justify-between gap-1 border-t border-line pt-3 text-sm">
         <div className="relative">
           <button
@@ -1118,14 +1126,17 @@ export default function PostCard({
           )}
         </div>
 
-        <button
+                <button
           onClick={kaydet}
-          className={`rounded-xl px-3 py-2 transition hover:bg-card2 ${
-            kaydetti ? "font-semibold text-brand" : "text-muted"
+          title={kaydetti ? "Kayıtlardan çıkar" : "Kaydet"}
+          className={`rounded-xl px-3 py-2 text-sm transition ${
+            kaydetti
+              ? "btn-brand font-semibold"
+              : "text-muted hover:bg-card2"
           }`}
-          aria-label="Kaydet"
+          aria-label={kaydetti ? "Kayıtlardan çıkar" : "Kaydet"}
         >
-          🔖
+          🔖{kaydetti ? " Kayıtlı" : ""}
         </button>
         <button
           onClick={linkKopyala}

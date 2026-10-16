@@ -42,6 +42,8 @@ const ASAMALAR: Record<number, { ad: string; ikon: string }> = {
   2: { ad: "Gelişme", ikon: "📈" },
   3: { ad: "Alışma", ikon: "🔥" },
   4: { ad: "Son Vuruş", ikon: "💥" },
+  5: { ad: "Usta", ikon: "🏆" },
+  6: { ad: "Efsane", ikon: "👑" },
 };
 
 type KartProps = {
@@ -368,7 +370,7 @@ export default function GorevlerSayfasi() {
         </div>
         {!ozet.gunluk_acik && (
           <p className="px-1 text-xs text-muted">
-            Günlük görevler, 4 aşamanın tüm ödüllerini aldıktan sonra açılır.
+                      Günlük görevler, ilk 4 aşamanın tüm ödüllerini aldıktan sonra açılır.
           </p>
         )}
         {gunlukler.map((g) => (

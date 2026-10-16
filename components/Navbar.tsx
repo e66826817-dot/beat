@@ -127,6 +127,7 @@ export default function Navbar() {
     { href: "/ara", etiket: "Ara", ikon: "🔍", mobil: false },
     { href: "/etkinlikler", etiket: "Etkinlik", ikon: "📅", mobil: true },
     { href: "/anketler", etiket: "Anketler", ikon: "📊", mobil: true },
+        { href: "/oyunlar", etiket: "Oyunlar", ikon: "🎮", mobil: false },
     {
       href: profilYolu,
       etiket: kullaniciAdi ? "Profil" : "Giriş",
@@ -159,7 +160,7 @@ export default function Navbar() {
           </Link>
 
           <nav className="hidden items-center gap-2 md:flex">
-            {linkler.map((l) => (
+                        {linkler.filter((l) => l.href !== "/ara").map((l) => (
               <Link
                 key={l.etiket}
                 href={l.href}
@@ -175,7 +176,7 @@ export default function Navbar() {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-3">
-            <Link href="/ara" aria-label="Ara" className={`${ikonBtn} md:hidden`}>
+            <Link href="/ara" aria-label="Ara" className={ikonBtn}>
               🔍
             </Link>
             {admin && (
@@ -255,6 +256,9 @@ export default function Navbar() {
                 className="block w-full px-4 py-3 text-left hover:bg-card2"
               >
                 {tema === "dark" ? "☀️ Açık tema" : "🌙 Koyu tema"}
+                              <Link href="/oyunlar" className="block px-4 py-3 hover:bg-card2">
+                🎮 Oyunlar
+              </Link>
               </button>
               {admin && (
                 <Link
@@ -298,10 +302,7 @@ export default function Navbar() {
         )}
       </header>
 
-      <nav
-        className="fixed inset-x-3 bottom-3 z-40 rounded-3xl border border-line bg-card/90 shadow-xl backdrop-blur-xl md:hidden"
-        style={{ marginBottom: "env(safe-area-inset-bottom)" }}
-      >
+            <nav className="nav-alt z-40 rounded-3xl border border-line bg-card/90 shadow-xl backdrop-blur-xl md:hidden">
         <div className="flex gap-1 p-1.5">
           {linkler
             .filter((l) => l.mobil)

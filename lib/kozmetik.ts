@@ -25,6 +25,24 @@ export const CERCEVELER: Cerceve[] = [
     arka: "linear-gradient(135deg,#22d3ee,#a855f7)",
     golge: "0 0 12px rgba(168,85,247,0.7)",
   },
+  {
+    id: "elmas",
+    ad: "Elmas",
+    arka: "linear-gradient(135deg,#ffffff,#67e8f9,#ffffff)",
+    golge: "0 0 12px rgba(103,232,249,0.8)",
+  },
+  {
+    id: "gokkusagi",
+    ad: "Gökkuşağı",
+    arka: "linear-gradient(135deg,#f43f5e,#f59e0b,#22c55e,#3b82f6,#a855f7)",
+    golge: "0 0 10px rgba(168,85,247,0.5)",
+  },
+  {
+    id: "buz",
+    ad: "Buz",
+    arka: "linear-gradient(135deg,#e0f2fe,#38bdf8)",
+    golge: "0 0 10px rgba(56,189,248,0.6)",
+  },
 ];
 
 export type Tema = {
@@ -82,6 +100,22 @@ export const TEMALAR: Tema[] = [
     banner: "linear-gradient(135deg,#f59e0b,#b45309)",
     sayfa:
       "radial-gradient(ellipse at top, rgba(245,158,11,0.28), transparent 55%), radial-gradient(ellipse at bottom right, rgba(180,83,9,0.22), transparent 55%)",
+    ucretsiz: false,
+  },
+  {
+    id: "sakura",
+    ad: "Sakura",
+    banner: "linear-gradient(135deg,#fbcfe8,#f472b6)",
+    sayfa:
+      "radial-gradient(ellipse at top, rgba(244,114,182,0.25), transparent 55%), radial-gradient(ellipse at bottom left, rgba(251,207,232,0.2), transparent 55%)",
+    ucretsiz: false,
+  },
+  {
+    id: "neon",
+    ad: "Neon",
+    banner: "linear-gradient(135deg,#22c55e,#7c3aed)",
+    sayfa:
+      "radial-gradient(ellipse at top, rgba(34,197,94,0.22), transparent 55%), radial-gradient(ellipse at bottom right, rgba(124,58,237,0.25), transparent 55%)",
     ucretsiz: false,
   },
 ];

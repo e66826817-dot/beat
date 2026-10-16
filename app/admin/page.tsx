@@ -19,6 +19,7 @@ const BAGLANTILAR = [
   { href: "/admin/uyeler", ad: "Grup üyeleri", ikon: "👥" },
   { href: "/admin/anketler", ad: "Anketler", ikon: "📊" },
   { href: "/admin/soru", ad: "Günün sorusu", ikon: "💭" },
+    { href: "/admin/yasakli-kelimeler", ad: "Yasaklı kelimeler", ikon: "🚫" },
 ];
 
 const ROL_ETIKET: Record<string, string> = {

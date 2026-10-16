@@ -38,13 +38,37 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+html {
+  overflow-x: clip;
+}
+
 body {
   background: var(--page);
   color: var(--ink);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   transition: background 0.2s, color 0.2s;
   -webkit-tap-highlight-color: transparent;
-  overflow-x: hidden;
+  overflow-x: clip;
+  overscroll-behavior-y: none;
+  min-height: 100dvh;
+}
+
+main {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+img,
+video {
+  max-width: 100%;
+}
+
+.nav-alt {
+  position: fixed;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  transform: translateZ(0);
 }
 
 /* Telefonda yazı alanına dokununca sayfanın yakınlaşmasını önler */

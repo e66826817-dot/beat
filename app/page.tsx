@@ -26,6 +26,7 @@ type EtkinlikOzet = {
   id: string;
   title: string;
   starts_at: string;
+  ends_at: string | null;
   location: string | null;
   event_attendees: { user_id: string }[];
 };
@@ -208,10 +209,12 @@ export default function AnaSayfa() {
         dogumGunleriHesapla((uyeVeri as unknown as UyeSatiri[]) || [])
       );
 
-      const { data: ev } = await supabase
+            const { data: ev } = await supabase
         .from("events")
-        .select("id, title, starts_at, location, event_attendees(user_id)")
-        .gte("starts_at", new Date().toISOString())
+        .select(
+          "id, title, starts_at, ends_at, location, event_attendees(user_id)"
+        )
+        .gte("ends_at", new Date().toISOString())
         .order("starts_at")
         .limit(3);
       setEtkinlikler((ev as unknown as EtkinlikOzet[]) || []);

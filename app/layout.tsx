@@ -31,7 +31,7 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <Navbar />
         </Suspense>
-        {children}
+           <Suspense fallback={null}>{children}</Suspense>
       </body>
     </html>
   );

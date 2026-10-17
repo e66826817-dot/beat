@@ -19,6 +19,7 @@ function turEtiketi(tur: string | null) {
   if (tur === "boyband") return "Boyband";
   if (tur === "girlband") return "Girlband";
   return "Karma";
+    if (tur === "solo") return "Solo";
 }
 
 export default function GruplarSayfasi() {
@@ -26,7 +27,7 @@ export default function GruplarSayfasi() {
   const [gruplar, setGruplar] = useState<Grup[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [hata, setHata] = useState("");
-  const [filtre, setFiltre] = useState<"hepsi" | "boyband" | "girlband" | "karma">("hepsi");
+  const [filtre, setFiltre] = useState<"hepsi" | "boyband" | "girlband" | "karma" | "solo">("hepsi");
 
   useEffect(() => {
     async function getir() {
@@ -69,6 +70,7 @@ export default function GruplarSayfasi() {
             ["boyband", "Boyband"],
             ["girlband", "Girlband"],
             ["karma", "Karma"],
+            ["solo", "Solo"],
           ] as const
         ).map(([anahtar, etiket]) => (
           <button

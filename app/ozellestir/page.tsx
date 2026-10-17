@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "../../lib/supabase";
 import { Avatar, UnvanRozeti } from "../../components/PostCard";
 import { CERCEVELER, TEMALAR, temaBul } from "../../lib/kozmetik";
+import UnvanYonetimi from "../../components/UnvanYonetimi";
 
 type Profil = {
   id: string;
@@ -22,6 +23,7 @@ type Unvan = {
   key: string | null;
   name: string;
   is_system: boolean;
+    is_private: boolean;
   creator_id: string | null;
   profiles: { username: string } | null;
 };
@@ -29,7 +31,7 @@ type Unvan = {
 type Gorev = { id: string; name: string; reward_type: string; reward_id: string };
 
 const UNVAN_SORGUSU =
-  "id, key, name, is_system, creator_id, profiles!titles_creator_id_fkey(username)";
+  "id, key, name, is_system, is_private, creator_id, profiles!titles_creator_id_fkey(username)";
 
 export default function OzellestirSayfasi() {
   const supabase = createClient();
@@ -38,18 +40,27 @@ export default function OzellestirSayfasi() {
   const [gorevler, setGorevler] = useState<Gorev[]>([]);
   const [unvanlar, setUnvanlar] = useState<Unvan[]>([]);
   const [yeniUnvan, setYeniUnvan] = useState("");
+    const [izinli, setIzinli] = useState<Set<string>>(new Set());
   const [yukleniyor, setYukleniyor] = useState(true);
   const [girisVar, setGirisVar] = useState(true);
   const [hata, setHata] = useState("");
   const [basari, setBasari] = useState("");
 
-  async function unvanlariGetir() {
+   async function unvanlariGetir() {
     const { data } = await supabase
       .from("titles")
       .select(UNVAN_SORGUSU)
       .order("name")
       .limit(200);
     setUnvanlar((data as unknown as Unvan[]) || []);
+    const { data: k } = await supabase.auth.getUser();
+    if (k.user) {
+      const { data: iz } = await supabase
+        .from("title_allowed")
+        .select("title_id")
+        .eq("user_id", k.user.id);
+      setIzinli(new Set((iz || []).map((x) => x.title_id)));
+    }
   }
 
   useEffect(() => {
@@ -206,7 +217,14 @@ export default function OzellestirSayfasi() {
   const sistemUnvanlari = unvanlar.filter(
     (u) => u.is_system && sahip.has(`title:${u.key}`)
   );
-  const kullaniciUnvanlari = unvanlar.filter((u) => !u.is_system);
+  const kullaniciUnvanlari = unvanlar.filter(
+    (u) =>
+      !u.is_system &&
+      (!u.is_private ||
+        u.creator_id === profil.id ||
+        izinli.has(u.id) ||
+        adminMi)
+  );
   const unvanOlusturabilir = sahip.has("ability:create_title");
   const kapakYetkisi = sahip.has("ability:banner_upload");
 
@@ -412,56 +430,12 @@ export default function OzellestirSayfasi() {
         )}
       </section>
 
-      {/* Kendi ünvanını oluştur */}
-      <section className="space-y-3 rounded-2xl border border-line bg-card p-4">
-        <h3 className="font-bold">Kendi ünvanını oluştur</h3>
-        {unvanOlusturabilir ? (
-          <>
-            <p className="text-sm text-muted">
-              En fazla 3 ünvan oluşturabilirsin. Ünvanını takan herkes için
-              sana bildirim gelir. ({kendiUnvanlari.length}/3)
-            </p>
-            {kendiUnvanlari.length < 3 && (
-              <form onSubmit={unvanOlustur} className="flex gap-2">
-                <input
-                  value={yeniUnvan}
-                  onChange={(e) => setYeniUnvan(e.target.value)}
-                  placeholder="Örn: Konser Kurdu"
-                  maxLength={20}
-                  className="flex-1 rounded-xl bg-card2 p-3 text-ink outline-none placeholder:text-muted focus:ring-2 focus:ring-brand"
-                />
-                <button
-                  type="submit"
-                  disabled={yeniUnvan.trim().length < 2}
-                  className="btn-brand rounded-xl px-5 py-2 text-sm font-semibold"
-                >
-                  Oluştur
-                </button>
-              </form>
-            )}
-            {kendiUnvanlari.length > 0 && (
-              <div className="space-y-2">
-                {kendiUnvanlari.map((u) => (
-                  <div
-                    key={u.id}
-                    className="flex items-center justify-between rounded-xl bg-card2 px-3 py-2 text-sm"
-                  >
-                    <span className="font-semibold">✦ {u.name}</span>
-                    <button
-                      onClick={() => unvanSil(u)}
-                      className="text-red-400 hover:text-red-300"
-                    >
-                      Sil
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        ) : (
-          <p className="text-sm text-muted">{ipucu("ability", "create_title")}</p>
-        )}
-      </section>
+           <UnvanYonetimi
+        profilId={profil.id}
+        olusturabilir={unvanOlusturabilir}
+        ipucu={ipucu("ability", "create_title")}
+        onDegisti={unvanlariGetir}
+      />
 
       {/* Özel kapak */}
       <section className="space-y-3 rounded-2xl border border-line bg-card p-4">

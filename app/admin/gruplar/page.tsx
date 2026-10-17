@@ -210,6 +210,7 @@ export default function AdminGruplarSayfasi() {
             <option value="boyband">Boyband</option>
             <option value="girlband">Girlband</option>
             <option value="karma">Karma</option>
+             <option value="solo">Solo sanatçı</option>
           </select>
           <input
             value={yil}

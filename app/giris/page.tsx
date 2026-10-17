@@ -2,14 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "../../lib/supabase";
 
 export default function GirisSayfasi() {
   const supabase = createClient();
   const router = useRouter();
 
-  const [kayitModu, setKayitModu] = useState(false);
+  const arama = useSearchParams();
+  const [kayitModu, setKayitModu] = useState(!!arama.get("davet"));
+  const [davet, setDavet] = useState((arama.get("davet") || "").toUpperCase());
   const [email, setEmail] = useState("");
   const [sifre, setSifre] = useState("");
   const [kullaniciAdi, setKullaniciAdi] = useState("");
@@ -34,7 +36,7 @@ export default function GirisSayfasi() {
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: sifre,
-        options: { data: { username: ad } },
+                options: { data: { username: ad, invite: davet.trim().toUpperCase() } },
       });
 
       if (error) {
@@ -96,7 +98,16 @@ export default function GirisSayfasi() {
             className={alan}
           />
         )}
-
+                {kayitModu && (
+          <input
+            type="text"
+            placeholder="Davet kodu (isteğe bağlı)"
+            value={davet}
+            onChange={(e) => setDavet(e.target.value.toUpperCase())}
+            maxLength={8}
+            className={alan}
+          />
+        )}
         <input
           type="email"
           placeholder="E-posta"

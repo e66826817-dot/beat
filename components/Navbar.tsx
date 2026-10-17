@@ -9,6 +9,7 @@ type Yaptirim = { tur: string; bitis: string; sebep: string | null };
 
 const ikonBtn =
   "flex h-10 w-10 items-center justify-center rounded-xl bg-card2 text-base transition hover:opacity-80";
+const menuOge = "block w-full px-4 py-3 text-left hover:bg-card2";
 
 export default function Navbar() {
   const supabase = createClient();
@@ -127,7 +128,7 @@ export default function Navbar() {
     { href: "/ara", etiket: "Ara", ikon: "🔍", mobil: false },
     { href: "/etkinlikler", etiket: "Etkinlik", ikon: "📅", mobil: true },
     { href: "/anketler", etiket: "Anketler", ikon: "📊", mobil: true },
-        { href: "/oyunlar", etiket: "Oyunlar", ikon: "🎮", mobil: false },
+    { href: "/oyunlar", etiket: "Oyunlar", ikon: "🎮", mobil: false },
     {
       href: profilYolu,
       etiket: kullaniciAdi ? "Profil" : "Giriş",
@@ -160,19 +161,21 @@ export default function Navbar() {
           </Link>
 
           <nav className="hidden items-center gap-2 md:flex">
-                        {linkler.filter((l) => l.href !== "/ara").map((l) => (
-              <Link
-                key={l.etiket}
-                href={l.href}
-                className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-                  aktifMi(l.href)
-                    ? "bg-card2 text-ink"
-                    : "text-muted hover:text-ink"
-                }`}
-              >
-                {l.etiket}
-              </Link>
-            ))}
+            {linkler
+              .filter((l) => l.href !== "/ara")
+              .map((l) => (
+                <Link
+                  key={l.etiket}
+                  href={l.href}
+                  className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
+                    aktifMi(l.href)
+                      ? "bg-card2 text-ink"
+                      : "text-muted hover:text-ink"
+                  }`}
+                >
+                  {l.etiket}
+                </Link>
+              ))}
           </nav>
 
           <div className="flex items-center gap-2 md:gap-3">
@@ -243,58 +246,6 @@ export default function Navbar() {
           </div>
         </div>
 
-        {menuAcik && (
-          <>
-            <button
-              aria-label="Menüyü kapat"
-              onClick={() => setMenuAcik(false)}
-              className="fixed inset-0 z-40 cursor-default md:hidden"
-            />
-            <div className="absolute right-4 top-full z-50 mt-1 w-56 overflow-hidden rounded-2xl border border-line bg-card text-sm shadow-xl md:hidden">
-              <button
-                onClick={temaDegistir}
-                className="block w-full px-4 py-3 text-left hover:bg-card2"
-              >
-                {tema === "dark" ? "☀️ Açık tema" : "🌙 Koyu tema"}
-                              <Link href="/oyunlar" className="block px-4 py-3 hover:bg-card2">
-                🎮 Oyunlar
-              </Link>
-              </button>
-              {admin && (
-                <Link
-                  href="/admin"
-                  className="block px-4 py-3 hover:bg-card2"
-                >
-                  🛡️ Yönetim paneli
-                </Link>
-              )}
-              {kullaniciAdi && (
-                <Link
-                  href="/ozellestir"
-                  className="block px-4 py-3 hover:bg-card2"
-                >
-                  🎨 Özelleştir
-                </Link>
-              )}
-              {kullaniciAdi ? (
-                <button
-                  onClick={cikisYap}
-                  className="block w-full px-4 py-3 text-left text-red-400 hover:bg-card2"
-                >
-                  Çıkış yap
-                </button>
-              ) : (
-                <Link
-                  href="/giris"
-                  className="block px-4 py-3 font-semibold text-brand hover:bg-card2"
-                >
-                  Giriş yap
-                </Link>
-              )}
-            </div>
-          </>
-        )}
-
         {yaptirimMetni && (
           <p className="border-t border-line bg-card2 px-4 py-2 text-center text-xs text-yellow-500">
             {yaptirimMetni}
@@ -302,7 +253,52 @@ export default function Navbar() {
         )}
       </header>
 
-            <nav className="nav-alt z-40 rounded-3xl border border-line bg-card/90 shadow-xl backdrop-blur-xl md:hidden">
+      {menuAcik && (
+        <div className="md:hidden">
+          <button
+            aria-label="Menüyü kapat"
+            onClick={() => setMenuAcik(false)}
+            className="fixed inset-0 z-50 cursor-default bg-black/30"
+          />
+          <div
+            className="fixed right-3 z-50 w-60 overflow-hidden rounded-2xl border border-line bg-card text-sm shadow-xl"
+            style={{ top: "calc(env(safe-area-inset-top) + 4.25rem)" }}
+          >
+            <Link href="/oyunlar" className={menuOge}>
+              🎮 Oyunlar
+            </Link>
+            {kullaniciAdi && (
+              <Link href="/davet" className={menuOge}>
+                📣 Arkadaşını davet et
+              </Link>
+            )}
+            {kullaniciAdi && (
+              <Link href="/ozellestir" className={menuOge}>
+                🎨 Özelleştir
+              </Link>
+            )}
+            {admin && (
+              <Link href="/admin" className={menuOge}>
+                🛡️ Yönetim paneli
+              </Link>
+            )}
+            <button onClick={temaDegistir} className={menuOge}>
+              {tema === "dark" ? "☀️ Açık tema" : "🌙 Koyu tema"}
+            </button>
+            {kullaniciAdi ? (
+              <button onClick={cikisYap} className={`${menuOge} text-red-400`}>
+                Çıkış yap
+              </button>
+            ) : (
+              <Link href="/giris" className={`${menuOge} font-semibold text-brand`}>
+                Giriş yap
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
+      <nav className="nav-alt z-40 rounded-3xl border border-line bg-card/90 shadow-xl backdrop-blur-xl md:hidden">
         <div className="flex gap-1 p-1.5">
           {linkler
             .filter((l) => l.mobil)

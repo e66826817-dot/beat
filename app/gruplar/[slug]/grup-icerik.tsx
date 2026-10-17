@@ -35,6 +35,7 @@ function turEtiketi(tur: string | null) {
   if (tur === "boyband") return "Boyband";
   if (tur === "girlband") return "Girlband";
   return "Karma";
+   if (tur === "solo") return "Solo";
 }
 
 export default function GrupIcerik() {

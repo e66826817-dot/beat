@@ -44,6 +44,7 @@ const ASAMALAR: Record<number, { ad: string; ikon: string }> = {
   4: { ad: "Son Vuruş", ikon: "💥" },
   5: { ad: "Usta", ikon: "🏆" },
   6: { ad: "Efsane", ikon: "👑" },
+    7: { ad: "Elçi", ikon: "📣" },
 };
 
 type KartProps = {

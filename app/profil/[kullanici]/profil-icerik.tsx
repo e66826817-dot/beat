@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { createClient } from "../../../lib/supabase";
+import ProfilKisisel from "../../../components/ProfilKisisel";
 import PostCard, {
   Avatar,
   Gonderi,

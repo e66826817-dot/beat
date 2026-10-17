@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "../lib/supabase";
+import NotlarSeridi from "../components/NotlarSeridi";
 import PostCard, {
   Avatar,
   Gonderi,
@@ -359,6 +360,7 @@ export default function AnaSayfa() {
         </section>
       )}
 
+            <NotlarSeridi kullaniciId={kullaniciId} />
       {gununSorusu && (
         <Link
           href="/soru"

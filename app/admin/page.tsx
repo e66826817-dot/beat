@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase";
-import NotlarSeridi from "../components/NotlarSeridi";
+   import NotlarSeridi from "../../components/NotlarSeridi";
 
 type Yetkili = { id: string; username: string; role: string };
 type Yaptirim = {

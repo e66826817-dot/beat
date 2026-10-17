@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase";
+import NotlarSeridi from "../components/NotlarSeridi";
 
 type Yetkili = { id: string; username: string; role: string };
 type Yaptirim = {
@@ -20,6 +21,7 @@ const BAGLANTILAR = [
   { href: "/admin/anketler", ad: "Anketler", ikon: "📊" },
   { href: "/admin/soru", ad: "Günün sorusu", ikon: "💭" },
     { href: "/admin/yasakli-kelimeler", ad: "Yasaklı kelimeler", ikon: "🚫" },
+      { href: "/admin/sanatcilar", ad: "TR pop sanatçıları", ikon: "🎤" },
 ];
 
 const ROL_ETIKET: Record<string, string> = {

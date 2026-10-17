@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import ProfilIcerik from "./profil-icerik";
+import ProfilKisisel from "../../../components/ProfilKisisel";
 
 export default function ProfilSayfasi() {
   return (

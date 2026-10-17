@@ -441,6 +441,10 @@ export default function ProfilSayfasi() {
               {profil.bio && (
                 <p className="whitespace-pre-wrap text-sm">{profil.bio}</p>
               )}
+                            <ProfilKisisel
+                profilId={profil.id}
+                benimProfilim={!!benimProfilim}
+              />
 
               <div className="flex gap-5 text-sm">
                                 <Link

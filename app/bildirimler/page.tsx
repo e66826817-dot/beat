@@ -12,19 +12,23 @@ type Tur =
   | "repost"
   | "quote"
   | "mention"
-  | "title_worn";
+  | "title_worn"
+  | "video_like"
+  | "video_comment";
 
 type Bildirim = {
   id: string;
   type: Tur;
   post_id: string | null;
   ref_id: string | null;
+  video_id: string | null;
   info: string | null;
   is_read: boolean;
   created_at: string;
   profiles: { username: string } | null;
   posts: { content: string | null } | null;
   ref: { content: string | null } | null;
+  vid: { caption: string | null } | null;
 };
 
 const IKONLAR: Record<Tur, string> = {
@@ -36,6 +40,8 @@ const IKONLAR: Record<Tur, string> = {
   quote: "✍️",
   mention: "@",
   title_worn: "✦",
+  video_like: "🎬",
+  video_comment: "🎬",
 };
 
 const METINLER: Record<Tur, string> = {
@@ -47,6 +53,8 @@ const METINLER: Record<Tur, string> = {
   quote: "gönderini alıntıladı",
   mention: "seni bir gönderide etiketledi",
   title_worn: "oluşturduğun ünvanı taktı",
+  video_like: "videonu beğendi",
+  video_comment: "videona yorum yaptı",
 };
 
 export default function BildirimlerSayfasi() {
@@ -68,7 +76,7 @@ export default function BildirimlerSayfasi() {
       const { data, error } = await supabase
         .from("notifications")
         .select(
-          "id, type, post_id, ref_id, info, is_read, created_at, profiles!notifications_actor_id_fkey(username), posts!notifications_post_id_fkey(content), ref:posts!notifications_ref_id_fkey(content)"
+          "id, type, post_id, ref_id, video_id, info, is_read, created_at, profiles!notifications_actor_id_fkey(username), posts!notifications_post_id_fkey(content), ref:posts!notifications_ref_id_fkey(content), vid:videos!notifications_video_id_fkey(caption)"
         )
         .order("created_at", { ascending: false })
         .limit(50);
@@ -129,9 +137,8 @@ export default function BildirimlerSayfasi() {
         <div className="rounded-3xl border border-dashed border-line py-12 text-center text-muted">
           <p className="text-4xl">🔔</p>
           <p className="mt-2 px-4">
-            Henüz bildirim yok. Biri gönderine tepki verince, yorum yapınca,
-            yanıtlayınca, paylaşınca, etiketleyince, ünvanını takınca ya da
-            seni takip edince burada görünür.
+            Henüz bildirim yok. Biri gönderine ya da videona etkileşimde
+            bulununca, seni takip edince ya da etiketleyince burada görünür.
           </p>
         </div>
       )}
@@ -139,16 +146,23 @@ export default function BildirimlerSayfasi() {
       <div className="space-y-2">
         {bildirimler.map((b) => {
           const kisi = b.profiles?.username ?? "bilinmiyor";
+          const videoMu = b.type === "video_like" || b.type === "video_comment";
           const hedefId = b.type === "quote" && b.ref_id ? b.ref_id : b.post_id;
           const hedef =
             b.type === "follow" || b.type === "title_worn"
               ? `/profil/${kisi}`
+              : videoMu
+              ? b.video_id
+                ? `/videolar?v=${b.video_id}`
+                : "/videolar"
               : hedefId
               ? `/gonderi/${hedefId}`
               : "/";
           const altMetin =
             b.type === "title_worn"
               ? b.info
+              : videoMu
+              ? b.vid?.caption ?? null
               : b.type === "quote"
               ? b.ref?.content ?? b.posts?.content ?? null
               : b.posts?.content ?? null;

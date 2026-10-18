@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "../../lib/supabase";
+import { BELGE_SURUMU } from "../../lib/belgeler";
 
-export default function GirisSayfasi() {
+function GirisIcerik() {
   const supabase = createClient();
   const router = useRouter();
 
@@ -16,6 +17,9 @@ export default function GirisSayfasi() {
   const [sifre, setSifre] = useState("");
   const [kullaniciAdi, setKullaniciAdi] = useState("");
   const [mesaj, setMesaj] = useState("");
+  const [sart, setSart] = useState(false);
+  const [gizl, setGizl] = useState(false);
+  const [yas, setYas] = useState(false);
   const [yukleniyor, setYukleniyor] = useState(false);
 
   async function gonder(e: React.FormEvent) {
@@ -33,10 +37,21 @@ export default function GirisSayfasi() {
         return;
       }
 
+      if (!sart || !gizl || !yas) {
+        setMesaj("Kayıt olmak için üç onay kutusunu da işaretlemelisin.");
+        setYukleniyor(false);
+        return;
+      }
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: sifre,
-                options: { data: { username: ad, invite: davet.trim().toUpperCase() } },
+        options: {
+          data: {
+            username: ad,
+            invite: davet.trim().toUpperCase(),
+            legal: BELGE_SURUMU,
+          },
+        },
       });
 
       if (error) {
@@ -98,7 +113,8 @@ export default function GirisSayfasi() {
             className={alan}
           />
         )}
-                {kayitModu && (
+
+        {kayitModu && (
           <input
             type="text"
             placeholder="Davet kodu (isteğe bağlı)"
@@ -127,6 +143,59 @@ export default function GirisSayfasi() {
           className={alan}
         />
 
+        {kayitModu && (
+          <div className="space-y-2 text-xs text-muted">
+            <label className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                checked={sart}
+                onChange={(e) => setSart(e.target.checked)}
+                className="mt-0.5 h-4 w-4"
+              />
+              <span>
+                <a href="/belge/sartlar" target="_blank" className="font-semibold text-brand">
+                  Kullanım Şartları
+                </a>{" "}
+                ve{" "}
+                <a href="/belge/kurallar" target="_blank" className="font-semibold text-brand">
+                  Topluluk Kuralları
+                </a>
+                &apos;nı okudum, kabul ediyorum.
+              </span>
+            </label>
+            <label className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                checked={gizl}
+                onChange={(e) => setGizl(e.target.checked)}
+                className="mt-0.5 h-4 w-4"
+              />
+              <span>
+                <a href="/belge/gizlilik" target="_blank" className="font-semibold text-brand">
+                  Gizlilik Politikası
+                </a>{" "}
+                ve{" "}
+                <a href="/belge/kvkk" target="_blank" className="font-semibold text-brand">
+                  KVKK Aydınlatma Metni
+                </a>
+                &apos;ni okudum.
+              </span>
+            </label>
+            <label className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                checked={yas}
+                onChange={(e) => setYas(e.target.checked)}
+                className="mt-0.5 h-4 w-4"
+              />
+              <span>
+                En az 13 yaşındayım. 18 yaşından küçüksem velimin bilgisi ve
+                onayı var.
+              </span>
+            </label>
+          </div>
+        )}
+
         <button
           type="submit"
           disabled={yukleniyor}
@@ -151,5 +220,13 @@ export default function GirisSayfasi() {
         </button>
       </form>
     </main>
+  );
+}
+
+export default function GirisSayfasi() {
+  return (
+    <Suspense fallback={null}>
+      <GirisIcerik />
+    </Suspense>
   );
 }

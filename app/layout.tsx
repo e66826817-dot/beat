@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import "./globals.css";
 import Navbar from "../components/Navbar";
+import OnayKapisi from "../components/OnayKapisi";
+import AltBilgi from "../components/AltBilgi";
 
 export const metadata: Metadata = {
   title: "Beat",
@@ -17,7 +19,6 @@ export const viewport: Viewport = {
 
 const temaBetigi = `(function(){try{var t=localStorage.getItem('beat-tema');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}catch(e){document.documentElement.setAttribute('data-theme','dark')}})()`;
 
-// 15 Ekim - 2 Kasım arası otomatik açılır; kullanıcı menüden değiştirebilir
 const sezonBetigi = `(function(){try{var s=localStorage.getItem('beat-sezon');var d=new Date();var m=d.getMonth(),g=d.getDate();var a=(m===9&&g>=15)||(m===10&&g<=2);if(s==='1'||(s===null&&a)){document.documentElement.setAttribute('data-season','halloween')}}catch(e){}})()`;
 
 const DEKOR = [
@@ -57,8 +58,10 @@ export default function RootLayout({
         </div>
         <Suspense fallback={null}>
           <Navbar />
+          <OnayKapisi />
         </Suspense>
         <Suspense fallback={null}>{children}</Suspense>
+        <AltBilgi />
       </body>
     </html>
   );

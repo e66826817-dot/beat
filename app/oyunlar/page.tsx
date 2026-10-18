@@ -6,27 +6,31 @@ export default function OyunlarSayfasi() {
       <div>
         <h2 className="text-2xl font-extrabold">🎮 Oyunlar</h2>
         <p className="text-sm text-muted">
-          Diğer hayranlarla oyna. Maç ya da görev gerekmez, sadece keyif için.
+          Diğer hayranlarla oyna. Sadece keyif için.
         </p>
       </div>
 
       <Link
-        href="/oyunlar/satranc"
+        href="/oyunlar/okey"
         className="btn-brand block rounded-3xl p-6 transition hover:-translate-y-0.5"
       >
-        <p className="text-4xl">♟️</p>
-        <h3 className="mt-2 text-xl font-extrabold">Satranç</h3>
+        <p className="text-4xl">🎃</p>
+        <h3 className="mt-2 text-xl font-extrabold">Okey</h3>
         <p className="text-sm opacity-90">
-          Online, 2 kişilik. Oyun aç, linki arkadaşına gönder ya da bekleyen bir
-          oyuna katıl.
+          4 kişilik, saatli. Oda aç, kodu paylaş ya da boş bir masaya otur.
         </p>
       </Link>
 
-      <div className="rounded-3xl border border-dashed border-line bg-card p-6 opacity-80">
-        <p className="text-4xl">🀄</p>
-        <h3 className="mt-2 text-xl font-extrabold">Okey</h3>
-        <p className="text-sm text-muted">Yakında geliyor.</p>
-      </div>
+      <Link
+        href="/oyunlar/satranc"
+        className="block rounded-3xl border border-line bg-card p-6 transition hover:-translate-y-0.5"
+      >
+        <p className="text-4xl">♟️</p>
+        <h3 className="mt-2 text-xl font-extrabold">Satranç</h3>
+        <p className="text-sm text-muted">
+          Online, 2 kişilik. Saatli, özel oda ve sohbet destekli.
+        </p>
+      </Link>
     </main>
   );
 }

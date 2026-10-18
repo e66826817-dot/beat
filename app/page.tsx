@@ -361,6 +361,15 @@ export default function AnaSayfa() {
         </section>
       )}
 
+                  <Link
+        href="/oyunlar/okey"
+        className="sezon-kart btn-brand rounded-3xl p-4 text-center transition hover:-translate-y-0.5"
+      >
+        <p className="text-lg font-extrabold">🎃 Cadılar Bayramı özel</p>
+        <p className="text-sm opacity-90">
+          Okey masası kuruldu, 3 arkadaşını topla! 🦇
+        </p>
+      </Link>
             <NotlarSeridi kullaniciId={kullaniciId} />
                   <DunUnArtisti />
       {gununSorusu && (

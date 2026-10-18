@@ -20,6 +20,7 @@ export default function Navbar() {
   const [okunmamis, setOkunmamis] = useState(0);
   const [tema, setTema] = useState<"dark" | "light">("dark");
   const [menuAcik, setMenuAcik] = useState(false);
+    const [sezon, setSezon] = useState(false);
   const [yaptirim, setYaptirim] = useState<Yaptirim | null>(null);
 
   async function sayiGetir(uid: string | null) {
@@ -36,6 +37,7 @@ export default function Navbar() {
   }
 
   useEffect(() => {
+        setSezon(document.documentElement.getAttribute("data-season") === "halloween");
     setTema(
       document.documentElement.getAttribute("data-theme") === "light"
         ? "light"
@@ -104,6 +106,15 @@ export default function Navbar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, kullaniciId]);
 
+    function sezonDegistir() {
+    const yeni = !sezon;
+    setSezon(yeni);
+    if (yeni) document.documentElement.setAttribute("data-season", "halloween");
+    else document.documentElement.removeAttribute("data-season");
+    try {
+      localStorage.setItem("beat-sezon", yeni ? "1" : "0");
+    } catch {}
+  }
   function temaDegistir() {
     const yeni = tema === "dark" ? "light" : "dark";
     setTema(yeni);
@@ -158,8 +169,9 @@ export default function Navbar() {
     <>
       <header className="sticky top-0 z-40 border-b border-line bg-page/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-3">
-          <Link href="/" className="text-2xl font-extrabold text-gradient">
-            Beat
+                    <Link href="/" className="flex items-center gap-1 text-2xl font-extrabold">
+            <span className="text-gradient">Beat</span>
+            <span className="sezon-yuz">🎃</span>
           </Link>
 
           <nav className="hidden items-center gap-2 md:flex">
@@ -212,7 +224,14 @@ export default function Navbar() {
                 )}
               </Link>
             )}
-
+ 
+                        <button
+              onClick={sezonDegistir}
+              aria-label="Cadılar Bayramı modu"
+              className={`${ikonBtn} hidden md:flex`}
+            >
+              {sezon ? "🎃" : "🕯️"}
+            </button>
             <button
               onClick={temaDegistir}
               aria-label="Temayı değiştir"
@@ -294,6 +313,9 @@ export default function Navbar() {
               </Link>
             )}
             <button onClick={temaDegistir} className={menuOge}>
+                          <button onClick={sezonDegistir} className={menuOge}>
+              {sezon ? "🎃 Cadılar Bayramı: açık" : "🕯️ Cadılar Bayramı: kapalı"}
+            </button>
               {tema === "dark" ? "☀️ Açık tema" : "🌙 Koyu tema"}
             </button>
             {kullaniciAdi ? (

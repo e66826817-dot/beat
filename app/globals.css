@@ -108,3 +108,71 @@ a {
   background-clip: text;
   color: transparent;
 }
+/* ===== CADILAR BAYRAMI ===== */
+:root[data-season="halloween"][data-theme="dark"] {
+  --page: #0e0712;
+  --card: #1a0f26;
+  --card2: #26163a;
+  --line: #3b2358;
+  --ink: #f7efe6;
+  --muted: #b09ac4;
+  --brand: #ff7a1a;
+  --brand2: #8b3dff;
+}
+
+:root[data-season="halloween"][data-theme="light"] {
+  --page: #fff4e8;
+  --card: #ffffff;
+  --card2: #ffe8d1;
+  --line: #f3cfa5;
+  --ink: #2a1236;
+  --muted: #7a5a8a;
+  --brand: #e8590c;
+  --brand2: #6d28d9;
+}
+
+.sezon-yuz,
+.sezon-kart,
+.sezon-dekor {
+  display: none;
+}
+
+html[data-season="halloween"] .sezon-yuz {
+  display: inline;
+}
+
+html[data-season="halloween"] .sezon-kart {
+  display: block;
+}
+
+html[data-season="halloween"] .sezon-dekor {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.sezon-dekor span {
+  position: absolute;
+  top: -3rem;
+  font-size: 1.4rem;
+  opacity: 0.55;
+  animation: sezon-yuz linear infinite;
+}
+
+@keyframes sezon-yuz {
+  from {
+    transform: translate(0, -3rem) rotate(0deg);
+  }
+  to {
+    transform: translate(40px, 110vh) rotate(25deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-season="halloween"] .sezon-dekor {
+    display: none;
+  }
+}

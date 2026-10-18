@@ -129,6 +129,7 @@ export default function Navbar() {
     { href: "/etkinlikler", etiket: "Etkinlik", ikon: "📅", mobil: true },
     { href: "/anketler", etiket: "Anketler", ikon: "📊", mobil: true },
     { href: "/oyunlar", etiket: "Oyunlar", ikon: "🎮", mobil: false },
+        { href: "/videolar", etiket: "Videolar", ikon: "🎬", mobil: false },
     {
       href: profilYolu,
       etiket: kullaniciAdi ? "Profil" : "Giriş",
@@ -266,6 +267,9 @@ export default function Navbar() {
           >
             <Link href="/oyunlar" className={menuOge}>
               🎮 Oyunlar
+            </Link>
+                        <Link href="/videolar" className={menuOge}>
+              🎬 Videolar
             </Link>
             {kullaniciAdi && (
               <Link href="/davet" className={menuOge}>

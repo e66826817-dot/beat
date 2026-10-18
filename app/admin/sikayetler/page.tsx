@@ -33,6 +33,7 @@ const TUR: Record<string, string> = {
   post: "Gönderi",
   comment: "Yorum",
   user: "Kullanıcı",
+  video: "Video",
 };
 
 export default function AdminSikayetlerSayfasi() {
@@ -108,6 +109,25 @@ export default function AdminSikayetlerSayfasi() {
       }
     }
 
+        const videoIdleri = idler("video");
+    if (videoIdleri.length > 0) {
+      const { data: vv } = await supabase
+        .from("videos")
+        .select("id, caption, profiles!videos_user_id_fkey(username)")
+        .in("id", videoIdleri);
+      for (const x of (vv as unknown as {
+        id: string;
+        caption: string | null;
+        profiles: { username: string } | null;
+      }[]) || []) {
+        harita[x.id] = {
+          var: true,
+          metin: x.caption || "(açıklamasız video)",
+          sahip: x.profiles?.username ?? "bilinmiyor",
+          link: "/videolar",
+        };
+      }
+    }
     const kullaniciIdleri = idler("user");
     if (kullaniciIdleri.length > 0) {
       const { data: u } = await supabase

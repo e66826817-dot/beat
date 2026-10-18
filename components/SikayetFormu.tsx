@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createClient } from "../lib/supabase";
 
 type Props = {
-  hedefTuru: "post" | "comment" | "user";
+  hedefTuru: "post" | "comment" | "user" | "video";
   hedefId: string;
   kullaniciId: string;
   onKapat: () => void;

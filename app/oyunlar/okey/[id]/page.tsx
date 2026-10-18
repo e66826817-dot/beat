@@ -34,6 +34,142 @@ type Oyun = {
 
 type El = { user_id: string; tiles: number[] };
 
+const YUVA_SAYISI = 21;
+
+function yuvaDoldur(liste: number[]): (number | null)[] {
+  const y: (number | null)[] = liste.slice(0, YUVA_SAYISI);
+  while (y.length < YUVA_SAYISI) y.push(null);
+  return y;
+}
+
+function yuvaBul(x: number, y: number): number | null {
+  const el = document.elementFromPoint(x, y)?.closest("[data-yuva]");
+  return el ? Number(el.getAttribute("data-yuva")) : null;
+}
+
+// Istaka: taşlar sürüklenip istenen (boş ya da dolu) yuvaya bırakılır.
+// Dokununca taş seçilir (atmak için), sürükleyince yer değiştirir.
+function Istaka({
+  yuva,
+  onYuva,
+  ok,
+  secili,
+  onSec,
+}: {
+  yuva: (number | null)[];
+  onYuva: (y: (number | null)[]) => void;
+  ok: React.ComponentProps<typeof OkeyTasi>["ok"];
+  secili: number | null;
+  onSec: (t: number | null) => void;
+}) {
+  const [tutulan, setTutulan] = useState<number | null>(null); // sürüklenen taş
+  const [hedef, setHedef] = useState<number | null>(null);
+  const [imlec, setImlec] = useState({ x: 0, y: 0 });
+  const yuvaRef = useRef(yuva);
+  const surukledi = useRef(false);
+
+  useEffect(() => {
+    yuvaRef.current = yuva;
+  }, [yuva]);
+
+  const olcu = yuva.find((t) => t !== null) ?? 0;
+
+  function baslat(e: React.PointerEvent, tas: number) {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    const bas = { x: e.clientX, y: e.clientY };
+    let basladi = false;
+
+    const hareket = (ev: PointerEvent) => {
+      if (!basladi) {
+        if (Math.hypot(ev.clientX - bas.x, ev.clientY - bas.y) < 8) return;
+        basladi = true;
+        surukledi.current = true;
+        setTutulan(tas);
+      }
+      setImlec({ x: ev.clientX, y: ev.clientY });
+      setHedef(yuvaBul(ev.clientX, ev.clientY));
+    };
+
+    const temizle = () => {
+      window.removeEventListener("pointermove", hareket);
+      window.removeEventListener("pointerup", birak);
+      window.removeEventListener("pointercancel", iptal);
+      setTutulan(null);
+      setHedef(null);
+      setTimeout(() => {
+        surukledi.current = false;
+      }, 0);
+    };
+
+    const birak = (ev: PointerEvent) => {
+      if (basladi) {
+        const h = yuvaBul(ev.clientX, ev.clientY);
+        const y = [...yuvaRef.current];
+        const i = y.indexOf(tas);
+        if (h !== null && i >= 0 && h !== i) {
+          [y[i], y[h]] = [y[h], y[i]];
+          onYuva(y);
+        }
+      }
+      temizle();
+    };
+
+    const iptal = () => temizle();
+
+    window.addEventListener("pointermove", hareket);
+    window.addEventListener("pointerup", birak);
+    window.addEventListener("pointercancel", iptal);
+  }
+
+  return (
+    <>
+      <div className="flex flex-wrap justify-center gap-1.5 py-1">
+        {yuva.map((t, i) => (
+          <div
+            key={i}
+            data-yuva={i}
+            onPointerDown={t !== null ? (e) => baslat(e, t) : undefined}
+            style={t !== null ? { touchAction: "none" } : undefined}
+            className={`rounded-lg transition ${
+              tutulan !== null && hedef === i && tutulan !== t
+                ? "ring-2 ring-brand"
+                : ""
+            } ${t !== null && tutulan === t ? "opacity-30" : ""}`}
+          >
+            {t !== null ? (
+              <OkeyTasi
+                id={t}
+                ok={ok}
+                secili={secili === t}
+                onClick={() => {
+                  if (surukledi.current) return;
+                  onSec(secili === t ? null : t);
+                }}
+              />
+            ) : (
+              <div className="relative">
+                <div className="invisible">
+                  <OkeyTasi id={olcu} ok={ok} />
+                </div>
+                <div className="absolute inset-0 rounded-lg border border-dashed border-white/25" />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {tutulan !== null && (
+        <div
+          className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-1/2 scale-110 drop-shadow-xl"
+          style={{ left: imlec.x, top: imlec.y }}
+        >
+          <OkeyTasi id={tutulan} ok={ok} />
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function OkeyOyunu() {
   const supabase = createClient();
   const router = useRouter();
@@ -50,7 +186,8 @@ export default function OkeyOyunu() {
   const [bulunamadi, setBulunamadi] = useState(false);
   const [hata, setHata] = useState("");
   const [isleniyor, setIsleniyor] = useState(false);
-  const [sira, setSira] = useState<number[]>([]);
+  const [yuva, setYuva] = useState<(number | null)[]>(() => yuvaDoldur([]));
+  const sira = yuva.filter((t): t is number => t !== null);
   const [secili, setSecili] = useState<number | null>(null);
   const [fark, setFark] = useState(0);
   const [simdi, setSimdi] = useState(Date.now());
@@ -117,12 +254,22 @@ export default function OkeyOyunu() {
   const koltuk = oyun && benimId ? oyun.players.indexOf(benimId) : -1;
   const benimEl = eller.find((e) => e.user_id === benimId)?.tiles ?? [];
 
-  // Sunucudan gelen elin sırasını koru, yeni taşı sona ekle
+  // Oyuncunun yerleşimini koru; giden taşın yuvası boşalır, yeni taş sona eklenir
   useEffect(() => {
-    setSira((onceki) => {
-      const kalan = onceki.filter((t) => benimEl.includes(t));
-      const yeni = benimEl.filter((t) => !onceki.includes(t));
-      return [...kalan, ...yeni];
+    setYuva((onceki) => {
+      const y = onceki.map((t) => (t !== null && benimEl.includes(t) ? t : null));
+      const yeni = benimEl.filter((t) => !y.includes(t));
+      for (const t of yeni) {
+        let son = -1;
+        y.forEach((v, i) => {
+          if (v !== null) son = i;
+        });
+        let h = son + 1 < YUVA_SAYISI ? son + 1 : y.indexOf(null);
+        if (h < 0 || y[h] !== null) h = y.indexOf(null);
+        if (h < 0) break;
+        y[h] = t;
+      }
+      return y;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [benimEl.join(",")]);
@@ -435,27 +582,26 @@ export default function OkeyOyunu() {
                 )}
               </div>
 
-              <div className="flex flex-wrap justify-center gap-1.5 py-1">
-                {sira.map((t) => (
-                  <OkeyTasi
-                    key={t}
-                    id={t}
-                    ok={ok}
-                    secili={secili === t}
-                    onClick={() => setSecili(secili === t ? null : t)}
-                  />
-                ))}
-              </div>
+              <Istaka
+                yuva={yuva}
+                onYuva={setYuva}
+                ok={ok}
+                secili={secili}
+                onSec={setSecili}
+              />
+              <p className="text-center text-[11px] text-white/60">
+                Taşı sürükleyip istediğin yere bırak. Dokunursan seçilir (atmak için).
+              </p>
 
               <div className="flex flex-wrap justify-center gap-2">
                 <button
-                  onClick={() => setSira(renkSirala(sira))}
+                  onClick={() => setYuva(yuvaDoldur(renkSirala(sira)))}
                   className="rounded-lg bg-card2 px-3 py-1.5 text-xs"
                 >
                   Renge göre diz
                 </button>
                 <button
-                  onClick={() => setSira(sayiSirala(sira))}
+                  onClick={() => setYuva(yuvaDoldur(sayiSirala(sira)))}
                   className="rounded-lg bg-card2 px-3 py-1.5 text-xs"
                 >
                   Sayıya göre diz

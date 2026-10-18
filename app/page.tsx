@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "../lib/supabase";
 import NotlarSeridi from "../components/NotlarSeridi";
+import DunUnArtisti from "../components/DununArtisti";
 import PostCard, {
   Avatar,
   Gonderi,
@@ -361,6 +362,7 @@ export default function AnaSayfa() {
       )}
 
             <NotlarSeridi kullaniciId={kullaniciId} />
+                  <DunUnArtisti />
       {gununSorusu && (
         <Link
           href="/soru"

@@ -303,6 +303,12 @@ export default function GorevlerSayfasi() {
       >
         🎨 Kazandıklarını takmak için Özelleştir&apos;e git →
       </Link>
+            <Link
+        href="/liderlik"
+        className="block rounded-2xl border border-line bg-card p-4 text-center font-semibold transition hover:-translate-y-0.5"
+      >
+        🏆 Liderlik tablosuna bak →
+      </Link>
 
       {hata && (
         <p className="rounded-xl border border-line bg-card p-3 text-sm text-yellow-500">

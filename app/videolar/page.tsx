@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase";
 import { Avatar, hataCevir, useEngelliler } from "../../components/PostCard";
@@ -19,44 +19,251 @@ type Video = {
     equipped_frame: string | null;
   } | null;
   video_likes: { user_id: string }[];
+  video_comments: { id: string }[];
+  video_reposts: { user_id: string }[];
+};
+
+type Yorum = {
+  id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  profiles: {
+    username: string;
+    avatar_url: string | null;
+    equipped_frame: string | null;
+  } | null;
 };
 
 const SORGU =
-  "id, user_id, video_url, path, caption, created_at, profiles!videos_user_id_fkey(username, avatar_url, equipped_frame), video_likes(user_id)";
+  "id, user_id, video_url, path, caption, created_at, profiles!videos_user_id_fkey(username, avatar_url, equipped_frame), video_likes(user_id), video_comments(id), video_reposts(user_id)";
+
+const YORUM_SORGUSU =
+  "id, user_id, content, created_at, profiles!video_comments_user_id_fkey(username, avatar_url, equipped_frame)";
 
 const MAKS_BOYUT = 25 * 1024 * 1024;
 const MAKS_SURE = 30;
+
+function zaman(iso: string) {
+  return new Date(iso).toLocaleDateString("tr-TR", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
+function Yorumlar({
+  videoId,
+  uid,
+  admin,
+  gizli,
+  onKapat,
+  onDegisti,
+}: {
+  videoId: string;
+  uid: string | null;
+  admin: boolean;
+  gizli: { has: (id: string) => boolean };
+  onKapat: () => void;
+  onDegisti: () => void;
+}) {
+  const supabase = useMemo(() => createClient(), []);
+  const [yorumlar, setYorumlar] = useState<Yorum[]>([]);
+  const [yukleniyor, setYukleniyor] = useState(true);
+  const [metin, setMetin] = useState("");
+  const [gonderiliyor, setGonderiliyor] = useState(false);
+  const [hata, setHata] = useState("");
+
+  async function getir() {
+    const { data, error } = await supabase
+      .from("video_comments")
+      .select(YORUM_SORGUSU)
+      .eq("video_id", videoId)
+      .order("created_at", { ascending: true })
+      .limit(100);
+    if (error) setHata(hataCevir(error.message));
+    else setYorumlar((data as unknown as Yorum[]) || []);
+    setYukleniyor(false);
+  }
+
+  useEffect(() => {
+    getir();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoId]);
+
+  async function gonder(e: React.FormEvent) {
+    e.preventDefault();
+    const temiz = metin.trim();
+    if (!uid || !temiz || gonderiliyor) return;
+    setHata("");
+    setGonderiliyor(true);
+    const { error } = await supabase
+      .from("video_comments")
+      .insert({ video_id: videoId, user_id: uid, content: temiz });
+    if (error) setHata(hataCevir(error.message));
+    else {
+      setMetin("");
+      await getir();
+      onDegisti();
+    }
+    setGonderiliyor(false);
+  }
+
+  async function sil(y: Yorum) {
+    if (!window.confirm("Bu yorum silinsin mi?")) return;
+    setHata("");
+    const { data, error } = await supabase
+      .from("video_comments")
+      .delete()
+      .eq("id", y.id)
+      .select("id");
+    if (error || !data || data.length === 0) {
+      setHata(hataCevir(error?.message ?? "Yorum silinemedi."));
+      return;
+    }
+    await getir();
+    onDegisti();
+  }
+
+  const gorunen = yorumlar.filter((y) => !gizli.has(y.user_id));
+
+  return (
+    <div className="absolute inset-x-0 bottom-0 top-1/4 z-20 flex flex-col rounded-t-3xl bg-card text-ink shadow-2xl">
+      <div className="flex items-center justify-between px-4 py-3">
+        <h3 className="font-bold">Yorumlar</h3>
+        <button
+          onClick={onKapat}
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-card2 text-sm"
+          aria-label="Kapat"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 pb-2">
+        {yukleniyor ? (
+          <p className="py-6 text-center text-sm text-muted">Yükleniyor...</p>
+        ) : gorunen.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted">
+            Henüz yorum yok. İlk yorumu sen yaz!
+          </p>
+        ) : (
+          gorunen.map((y) => {
+            const ad = y.profiles?.username ?? "bilinmiyor";
+            return (
+              <div key={y.id} className="flex gap-2">
+                <Avatar
+                  url={y.profiles?.avatar_url}
+                  ad={ad}
+                  boyut="h-8 w-8"
+                  cerceve={y.profiles?.equipped_frame}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted">
+                    <Link
+                      href={`/profil/${ad}`}
+                      className="font-semibold text-ink"
+                    >
+                      @{ad}
+                    </Link>{" "}
+                    · {zaman(y.created_at)}
+                  </p>
+                  <p className="whitespace-pre-wrap break-words text-sm">
+                    {y.content}
+                  </p>
+                </div>
+                {(admin || y.user_id === uid) && (
+                  <button
+                    onClick={() => sil(y)}
+                    className="shrink-0 self-start text-xs text-red-400"
+                    aria-label="Yorumu sil"
+                  >
+                    🗑
+                  </button>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {hata && (
+        <p className="mx-4 mb-2 rounded-xl bg-card2 p-2 text-xs text-yellow-500">
+          {hata}
+        </p>
+      )}
+
+      {uid ? (
+        <form
+          onSubmit={gonder}
+          className="flex gap-2 border-t border-line p-3"
+        >
+          <input
+            value={metin}
+            onChange={(e) => setMetin(e.target.value)}
+            placeholder="Yorum yaz..."
+            maxLength={300}
+            className="min-w-0 flex-1 rounded-full bg-card2 px-4 py-2 text-sm text-ink outline-none placeholder:text-muted focus:ring-2 focus:ring-brand"
+          />
+          <button
+            type="submit"
+            disabled={!metin.trim() || gonderiliyor}
+            className="btn-brand shrink-0 rounded-full px-4 py-2 text-sm font-semibold"
+          >
+            {gonderiliyor ? "..." : "Gönder"}
+          </button>
+        </form>
+      ) : (
+        <p className="border-t border-line p-3 text-center text-sm">
+          <Link href="/giris" className="font-semibold text-brand">
+            Yorum yapmak için giriş yap
+          </Link>
+        </p>
+      )}
+    </div>
+  );
+}
 
 function Kart({
   v,
   uid,
   admin,
   sessiz,
+  gizli,
   onSes,
   onBegen,
+  onRepost,
   onSil,
+  onYorum,
 }: {
   v: Video;
   uid: string | null;
   admin: boolean;
   sessiz: boolean;
+  gizli: { has: (id: string) => boolean };
   onSes: () => void;
   onBegen: (v: Video) => void;
+  onRepost: (v: Video) => void;
   onSil: (v: Video) => void;
+  onYorum: () => void;
 }) {
   const kutu = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
+  const gorunuyor = useRef(false);
+  const elleDuraklatti = useRef(false);
   const [duraklat, setDuraklat] = useState(false);
   const [rapor, setRapor] = useState(false);
+  const [yorumAcik, setYorumAcik] = useState(false);
 
   useEffect(() => {
     const el = kutu.current;
-    if (!el) return;
+    const vd = video.current;
+    if (!el || !vd) return;
+
     const gozlem = new IntersectionObserver(
       ([g]) => {
-        const vd = video.current;
-        if (!vd) return;
+        gorunuyor.current = g.isIntersecting;
         if (g.isIntersecting) {
+          elleDuraklatti.current = false;
           vd.play().catch(() => {});
           setDuraklat(false);
         } else {
@@ -67,7 +274,25 @@ function Kart({
       { threshold: 0.7 }
     );
     gozlem.observe(el);
-    return () => gozlem.disconnect();
+
+    // Sekme/uygulama arka plana geçince ya da sayfa kapanınca sesi durdur
+    const gorunurluk = () => {
+      if (document.hidden) vd.pause();
+      else if (gorunuyor.current && !elleDuraklatti.current) {
+        vd.play().catch(() => {});
+      }
+    };
+    const sayfaKapanirken = () => vd.pause();
+    document.addEventListener("visibilitychange", gorunurluk);
+    window.addEventListener("pagehide", sayfaKapanirken);
+
+    return () => {
+      gozlem.disconnect();
+      document.removeEventListener("visibilitychange", gorunurluk);
+      window.removeEventListener("pagehide", sayfaKapanirken);
+      // Başka sayfaya geçilince video arkada çalmaya devam etmesin
+      vd.pause();
+    };
   }, []);
 
   useEffect(() => {
@@ -78,9 +303,11 @@ function Kart({
     const vd = video.current;
     if (!vd) return;
     if (vd.paused) {
+      elleDuraklatti.current = false;
       vd.play().catch(() => {});
       setDuraklat(false);
     } else {
+      elleDuraklatti.current = true;
       vd.pause();
       setDuraklat(true);
     }
@@ -88,6 +315,10 @@ function Kart({
 
   const ad = v.profiles?.username ?? "bilinmiyor";
   const begendi = v.video_likes.some((l) => l.user_id === uid);
+  const repostladi = v.video_reposts.some((r) => r.user_id === uid);
+
+  const dugme =
+    "flex h-11 w-11 items-center justify-center rounded-full bg-black/50 text-xl";
 
   return (
     <div
@@ -133,32 +364,51 @@ function Kart({
         )}
       </div>
 
-      <div className="absolute bottom-6 right-3 flex flex-col items-center gap-4 text-white">
+      <div className="absolute bottom-6 right-3 flex flex-col items-center gap-3 text-white">
         <button
           onClick={() => onBegen(v)}
           className="flex flex-col items-center"
           aria-label="Beğen"
         >
-          <span
-            className={`flex h-12 w-12 items-center justify-center rounded-full bg-black/50 text-2xl ${
-              begendi ? "text-brand" : ""
-            }`}
-          >
+          <span className={`${dugme} text-2xl ${begendi ? "text-brand" : ""}`}>
             {begendi ? "♥" : "♡"}
           </span>
           <span className="text-xs font-semibold">{v.video_likes.length}</span>
         </button>
+
         <button
-          onClick={onSes}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-black/50 text-xl"
-          aria-label="Ses"
+          onClick={() => setYorumAcik(true)}
+          className="flex flex-col items-center"
+          aria-label="Yorumlar"
         >
+          <span className={dugme}>💬</span>
+          <span className="text-xs font-semibold">
+            {v.video_comments.length}
+          </span>
+        </button>
+
+        {uid && v.user_id !== uid && (
+          <button
+            onClick={() => onRepost(v)}
+            className="flex flex-col items-center"
+            aria-label="Repostla"
+          >
+            <span className={`${dugme} ${repostladi ? "text-brand" : ""}`}>
+              🔁
+            </span>
+            <span className="text-xs font-semibold">
+              {v.video_reposts.length}
+            </span>
+          </button>
+        )}
+
+        <button onClick={onSes} className={dugme} aria-label="Ses">
           {sessiz ? "🔇" : "🔊"}
         </button>
         {uid && v.user_id !== uid && (
           <button
             onClick={() => setRapor(true)}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-black/50 text-xl"
+            className={dugme}
             aria-label="Şikayet et"
           >
             ⚑
@@ -167,13 +417,24 @@ function Kart({
         {(admin || v.user_id === uid) && (
           <button
             onClick={() => onSil(v)}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-black/50 text-xl text-red-400"
+            className={`${dugme} text-red-400`}
             aria-label="Sil"
           >
             🗑
           </button>
         )}
       </div>
+
+      {yorumAcik && (
+        <Yorumlar
+          videoId={v.id}
+          uid={uid}
+          admin={admin}
+          gizli={gizli}
+          onKapat={() => setYorumAcik(false)}
+          onDegisti={onYorum}
+        />
+      )}
 
       {rapor && uid && (
         <div className="absolute inset-x-3 top-3 rounded-2xl bg-card p-2 text-ink">
@@ -216,6 +477,8 @@ export default function VideolarSayfasi() {
         ((data as unknown as Video[]) || []).map((v) => ({
           ...v,
           video_likes: v.video_likes ?? [],
+          video_comments: v.video_comments ?? [],
+          video_reposts: v.video_reposts ?? [],
         }))
       );
   }
@@ -317,6 +580,26 @@ export default function VideolarSayfasi() {
           .eq("video_id", v.id)
       : await supabase
           .from("video_likes")
+          .insert({ user_id: uid, video_id: v.id });
+    if (error) setHata(hataCevir(error.message));
+    else await getir();
+  }
+
+  async function repostla(v: Video) {
+    if (!uid) {
+      setHata("Repostlamak için giriş yapmalısın.");
+      return;
+    }
+    setHata("");
+    const repostladi = v.video_reposts.some((r) => r.user_id === uid);
+    const { error } = repostladi
+      ? await supabase
+          .from("video_reposts")
+          .delete()
+          .eq("user_id", uid)
+          .eq("video_id", v.id)
+      : await supabase
+          .from("video_reposts")
           .insert({ user_id: uid, video_id: v.id });
     if (error) setHata(hataCevir(error.message));
     else await getir();
@@ -431,9 +714,12 @@ export default function VideolarSayfasi() {
                 uid={uid}
                 admin={admin}
                 sessiz={sessiz}
+                gizli={gizli}
                 onSes={() => setSessiz(!sessiz)}
                 onBegen={begen}
+                onRepost={repostla}
                 onSil={sil}
+                onYorum={getir}
               />
             </div>
           ))}

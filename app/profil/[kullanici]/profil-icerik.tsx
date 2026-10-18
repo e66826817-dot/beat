@@ -55,6 +55,8 @@ export default function ProfilSayfasi() {
   const [engelli, setEngelli] = useState(false);
   const [sessiz, setSessiz] = useState(false);
 
+  const [gonderiSayisi, setGonderiSayisi] = useState<number | null>(null);
+  const [paylasimSayisi, setPaylasimSayisi] = useState<number | null>(null);
   const [takipciSayisi, setTakipciSayisi] = useState(0);
   const [takipSayisi, setTakipSayisi] = useState(0);
   const [takipEdiyor, setTakipEdiyor] = useState(false);
@@ -77,6 +79,22 @@ export default function ProfilSayfasi() {
       setTumGonderiler(
         ((data as unknown as Gonderi[]) || []).map(gonderiDuzenle)
       );
+  }
+
+  // Sayıları listeden değil veritabanından say (liste 100 ile sınırlı)
+  async function sayilariGetir(uid: string) {
+    const { count: toplam } = await supabase
+      .from("posts")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", uid);
+    const { count: saf } = await supabase
+      .from("posts")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", uid)
+      .not("repost_of", "is", null)
+      .or("content.is.null,content.eq.");
+    setPaylasimSayisi(saf ?? 0);
+    setGonderiSayisi(Math.max((toplam ?? 0) - (saf ?? 0), 0));
   }
 
   async function begenileriGetir(uid: string) {
@@ -105,13 +123,22 @@ export default function ProfilSayfasi() {
   }
 
   async function takipBilgisiGetir(profilId: string, uid: string | null) {
-    const { data: takipciler } = await supabase
+    const { count: takipciCount } = await supabase
       .from("user_follows")
-      .select("follower_id")
+      .select("follower_id", { count: "exact", head: true })
       .eq("following_id", profilId);
-    const liste = takipciler || [];
-    setTakipciSayisi(liste.length);
-    setTakipEdiyor(uid ? liste.some((t) => t.follower_id === uid) : false);
+    setTakipciSayisi(takipciCount ?? 0);
+    if (uid) {
+      const { data: ben } = await supabase
+        .from("user_follows")
+        .select("follower_id")
+        .eq("following_id", profilId)
+        .eq("follower_id", uid)
+        .maybeSingle();
+      setTakipEdiyor(!!ben);
+    } else {
+      setTakipEdiyor(false);
+    }
 
     const { count } = await supabase
       .from("user_follows")
@@ -170,6 +197,7 @@ export default function ProfilSayfasi() {
         }
 
         await gonderileriGetir(profilVerisi.id);
+        await sayilariGetir(profilVerisi.id);
         await begenileriGetir(profilVerisi.id);
         await takipBilgisiGetir(profilVerisi.id, uid);
       }
@@ -182,6 +210,7 @@ export default function ProfilSayfasi() {
   async function yenile() {
     if (!profil) return;
     await gonderileriGetir(profil.id);
+    await sayilariGetir(profil.id);
     await begenileriGetir(profil.id);
   }
 
@@ -359,8 +388,8 @@ export default function ProfilSayfasi() {
       : "Henüz tepki verilen gönderi yok.";
 
   const sekmeler: [Sekme, string, number][] = [
-    ["gonderiler", "Gönderiler", kendiGonderileri.length],
-    ["paylasimlar", "🔁 Paylaşımlar", paylasimlar.length],
+    ["gonderiler", "Gönderiler", gonderiSayisi ?? kendiGonderileri.length],
+    ["paylasimlar", "🔁 Paylaşımlar", paylasimSayisi ?? paylasimlar.length],
     ["tepkiler", "💖 Tepkiler", begeniler.length],
   ];
 
@@ -463,7 +492,7 @@ export default function ProfilSayfasi() {
                   <span className="text-muted">takip</span>
                 </Link>
                 <span>
-                  <b>{kendiGonderileri.length}</b>{" "}
+                  <b>{gonderiSayisi ?? kendiGonderileri.length}</b>{" "}
                   <span className="text-muted">gönderi</span>
                 </span>
               </div>

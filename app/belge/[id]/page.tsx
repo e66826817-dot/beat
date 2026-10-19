@@ -22,9 +22,6 @@ export default async function BelgeSayfasi({
     <main className="mx-auto max-w-2xl space-y-4 p-4">
       {taslakMi() && (
         <p className="rounded-2xl border border-yellow-500 bg-card p-3 text-sm text-yellow-500">
-          ⚠️ Bu belge taslak: işletme bilgileri (lib/belgeler.ts içindeki
-          ISLETME) henüz doldurulmamış. Yayına almadan önce doldur ve bir
-          avukata okut.
         </p>
       )}
 

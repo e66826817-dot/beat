@@ -1,12 +1,12 @@
-export const BELGE_SURUMU = "2026-10-1";
-export const GUNCELLEME = "18 Ekim 2026";
+export const BELGE_SURUMU = "2026-10-2";
+export const GUNCELLEME = "19 Ekim 2026";
 
 export const ISLETME = {
-  ad: "[HİZMET SAĞLAYICININ ADI SOYADI / UNVANI]",
-  eposta: "[İLETİŞİM E-POSTASI]",
-  adres: "[TEBLİGAT ADRESİ]",
-  site: "[SİTE ADRESİ, örn. beat.com.tr]",
-  sehir: "[ŞEHİR]",
+  ad: "[Altay Derbeder / altayderbeder]",
+  eposta: "[beatapptr@gmail.com]",
+  adres: "[İstanbul/Ümraniye/Altınşehir Mahallesi]",
+  site: "[https://beat-chi.vercel.app/]",
+  sehir: "[İstanbul]",
 };
 
 export type Belge = {

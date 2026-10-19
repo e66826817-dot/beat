@@ -312,10 +312,10 @@ export default function Navbar() {
                 🛡️ Yönetim paneli
               </Link>
             )}
-            <button onClick={temaDegistir} className={menuOge}>
-                          <button onClick={sezonDegistir} className={menuOge}>
+            <button onClick={sezonDegistir} className={menuOge}>
               {sezon ? "🎃 Cadılar Bayramı: açık" : "🕯️ Cadılar Bayramı: kapalı"}
             </button>
+            <button onClick={temaDegistir} className={menuOge}>
               {tema === "dark" ? "☀️ Açık tema" : "🌙 Koyu tema"}
             </button>
             {kullaniciAdi ? (

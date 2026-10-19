@@ -231,15 +231,19 @@ function Kart({
   const video = useRef<HTMLVideoElement>(null);
   const [duraklat, setDuraklat] = useState(false);
   const [rapor, setRapor] = useState(false);
+  const gorunuyor = useRef(false);
+  const elleDuraklatti = useRef(false);
 
   useEffect(() => {
     const el = kutu.current;
-    if (!el) return;
+    const vd = video.current;
+    if (!el || !vd) return;
+
     const gozlem = new IntersectionObserver(
       ([g]) => {
-        const vd = video.current;
-        if (!vd) return;
+        gorunuyor.current = g.isIntersecting;
         if (g.isIntersecting) {
+          elleDuraklatti.current = false;
           vd.play().catch(() => {});
           setDuraklat(false);
         } else {
@@ -250,7 +254,25 @@ function Kart({
       { threshold: 0.7 }
     );
     gozlem.observe(el);
-    return () => gozlem.disconnect();
+
+    // Sekme arka plana geçince ya da sayfa kapanırken sesi durdur
+    const gorunurluk = () => {
+      if (document.hidden) vd.pause();
+      else if (gorunuyor.current && !elleDuraklatti.current) {
+        vd.play().catch(() => {});
+      }
+    };
+    const sayfaKapanirken = () => vd.pause();
+    document.addEventListener("visibilitychange", gorunurluk);
+    window.addEventListener("pagehide", sayfaKapanirken);
+
+    return () => {
+      gozlem.disconnect();
+      document.removeEventListener("visibilitychange", gorunurluk);
+      window.removeEventListener("pagehide", sayfaKapanirken);
+      // Başka sayfaya geçilince video arkada çalmaya devam etmesin
+      vd.pause();
+    };
   }, []);
 
   useEffect(() => {
@@ -261,9 +283,11 @@ function Kart({
     const vd = video.current;
     if (!vd) return;
     if (vd.paused) {
+      elleDuraklatti.current = false;
       vd.play().catch(() => {});
       setDuraklat(false);
     } else {
+      elleDuraklatti.current = true;
       vd.pause();
       setDuraklat(true);
     }

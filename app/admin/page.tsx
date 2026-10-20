@@ -28,6 +28,7 @@ const ROL_ETIKET: Record<string, string> = {
   admin: "Admin",
   artist: "Sanatçı",
   fan: "Hayran",
+  magazine: "Magazin",
 };
 
 const SURELER = [
@@ -62,7 +63,7 @@ export default function AdminSayfasi() {
     const { data } = await supabase
       .from("profiles")
       .select("id, username, role")
-      .in("role", ["admin", "artist"])
+      .in("role", ["admin", "artist", "magazine"])
       .order("role")
       .order("username");
     setYetkililer(data || []);

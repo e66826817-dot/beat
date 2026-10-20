@@ -34,6 +34,7 @@ const TUR: Record<string, string> = {
   comment: "Yorum",
   user: "Kullanıcı",
   video: "Video",
+  channel_post: "Kanal gönderisi",
 };
 
 export default function AdminSikayetlerSayfasi() {
@@ -125,6 +126,25 @@ export default function AdminSikayetlerSayfasi() {
           metin: x.caption || "(açıklamasız video)",
           sahip: x.profiles?.username ?? "bilinmiyor",
           link: "/videolar",
+        };
+      }
+    }
+        const kanalIdleri = idler("channel_post");
+    if (kanalIdleri.length > 0) {
+      const { data: kp } = await supabase
+        .from("channel_posts")
+        .select("id, body, channels(slug, name)")
+        .in("id", kanalIdleri);
+      for (const x of (kp as unknown as {
+        id: string;
+        body: string | null;
+        channels: { slug: string; name: string } | null;
+      }[]) || []) {
+        harita[x.id] = {
+          var: true,
+          metin: x.body || "(fotoğraflı gönderi)",
+          sahip: x.channels?.name ?? "kanal",
+          link: x.channels ? `/kanallar/${x.channels.slug}` : "/kanallar",
         };
       }
     }

@@ -142,6 +142,7 @@ export default function Navbar() {
     { href: "/oyunlar", etiket: "Oyunlar", ikon: "🎮", mobil: false },
         { href: "/videolar", etiket: "Videolar", ikon: "🎬", mobil: false },
             { href: "/liderlik", etiket: "Liderlik", ikon: "🏆", mobil: false },
+                { href: "/kanallar", etiket: "Kanallar", ikon: "📰", mobil: false },
     {
       href: profilYolu,
       etiket: kullaniciAdi ? "Profil" : "Giriş",
@@ -298,6 +299,9 @@ export default function Navbar() {
             )}
                         <Link href="/liderlik" className={menuOge}>
               🏆 Liderlik
+            </Link>
+                        <Link href="/kanallar" className={menuOge}>
+              📰 Kanallar
             </Link>
             <Link href="/artist" className={menuOge}>
               ⭐ Günün artisti

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import "./globals.css";
 import Navbar from "../components/Navbar";
 import OnayKapisi from "../components/OnayKapisi";
+import GirisSerisi from "../components/GirisSerisi";
 import AltBilgi from "../components/AltBilgi";
 
 export const metadata: Metadata = {
@@ -59,6 +60,7 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <Navbar />
           <OnayKapisi />
+                    <GirisSerisi />
         </Suspense>
         <Suspense fallback={null}>{children}</Suspense>
         <AltBilgi />

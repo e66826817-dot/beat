@@ -5,6 +5,8 @@ import Link from "next/link";
 import { createClient } from "../lib/supabase";
 import { cerceveBul } from "../lib/kozmetik";
 import SikayetFormu from "./SikayetFormu";
+import StickerSecici, { StickerGorsel } from "./StickerSecici";
+import { stickerBul } from "../lib/stickers";
 
 export type Yazar = {
   username: string;
@@ -257,6 +259,9 @@ export function UnvanRozeti({ ad }: { ad: string }) {
 
 // Metindeki #etiket ve @kullanici kısımlarını tıklanabilir yapar
 export function MetinGoster({ metin }: { metin: string }) {
+    const stk = metin.match(/^\[\[s:([a-z0-9-]+)\]\]$/);
+  const sticker = stk ? stickerBul(stk[1]) : null;
+  if (sticker) return <StickerGorsel s={sticker} />;
   const parcalar = metin.split(/(#[\p{L}\p{N}_]+|@[A-Za-z0-9_]{3,20})/gu);
   return (
     <>
@@ -370,6 +375,7 @@ export default function PostCard({
   const [duzenleAcik, setDuzenleAcik] = useState(false);
   const [duzenleMetni, setDuzenleMetni] = useState("");
   const [kaydediliyor, setKaydediliyor] = useState(false);
+    const [stickerAcik, setStickerAcik] = useState(false);
   const yorumKutusuRef = useRef<HTMLInputElement>(null);
 
   // Eski tek fotoğraf + yeni fotoğraflar tek listede
@@ -593,6 +599,22 @@ export default function PostCard({
     engelOnbellekSifirla();
   }
 
+    async function stickerYolla(sid: string) {
+    if (!kullaniciId) return girisGerekli("Yorum yapmak");
+    setStickerAcik(false);
+    setHata("");
+    const { error } = await supabase.from("comments").insert({
+      post_id: g.id,
+      user_id: kullaniciId,
+      parent_id: cevapHedefi?.parentId ?? null,
+      content: `[[s:${sid}]]`,
+    });
+    if (error) setHata(hataCevir(error.message));
+    else {
+      setCevapHedefi(null);
+      await onYenile();
+    }
+  }
   async function yorumYap(e: React.FormEvent) {
     e.preventDefault();
     if (!yorumMetni.trim()) return;
@@ -1090,6 +1112,15 @@ export default function PostCard({
           )}
         </div>
 
+                        <button
+                  type="button"
+                  onClick={() => setStickerAcik(!stickerAcik)}
+                  className="rounded-2xl bg-card2 px-3 text-xl"
+                  aria-label="Sticker"
+                >
+                  😊
+                </button>
+        
         <button
           onClick={() => setAcik(!acik)}
           className="rounded-xl px-3 py-2 text-muted transition hover:bg-card2"
@@ -1215,6 +1246,7 @@ export default function PostCard({
 
           {kullaniciId && (
             <form onSubmit={yorumYap} className="space-y-1.5">
+                            {stickerAcik && <StickerSecici onSec={stickerYolla} />}
               {cevapHedefi && (
                 <p className="flex items-center gap-2 text-xs text-muted">
                   ↩ @{cevapHedefi.ad} kişisine yanıt veriyorsun

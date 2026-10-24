@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "../lib/supabase";
 import NotlarSeridi from "../components/NotlarSeridi";
 import DunUnArtisti from "../components/DununArtisti";
+import IlkAdimlar from "../components/IlkAdimlar";
 import PostCard, {
   Avatar,
   Gonderi,
@@ -370,6 +371,8 @@ export default function AnaSayfa() {
           Okey masası kuruldu, 3 arkadaşını topla! 🦇
         </p>
       </Link>
+            
+                  <IlkAdimlar kullaniciId={kullaniciId} kullaniciAdi={kullaniciAdi} />
             <NotlarSeridi kullaniciId={kullaniciId} />
                   <DunUnArtisti />
       {gununSorusu && (

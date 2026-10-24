@@ -5,6 +5,7 @@ import Navbar from "../components/Navbar";
 import OnayKapisi from "../components/OnayKapisi";
 import GirisSerisi from "../components/GirisSerisi";
 import AltBilgi from "../components/AltBilgi";
+import RehberTuru from "../components/RehberTuru";
 
 export const metadata: Metadata = {
   title: "Beat",
@@ -61,6 +62,7 @@ export default function RootLayout({
           <Navbar />
           <OnayKapisi />
                     <GirisSerisi />
+                              <RehberTuru />
         </Suspense>
         <Suspense fallback={null}>{children}</Suspense>
         <AltBilgi />

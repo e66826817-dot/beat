@@ -115,6 +115,10 @@ export default function Navbar() {
       localStorage.setItem("beat-sezon", yeni ? "1" : "0");
     } catch {}
   }
+    function rehberAc() {
+    setMenuAcik(false);
+    window.dispatchEvent(new Event("rehber-ac"));
+  }
   function temaDegistir() {
     const yeni = tema === "dark" ? "light" : "dark";
     setTema(yeni);
@@ -226,6 +230,13 @@ export default function Navbar() {
               </Link>
             )}
  
+                          <button
+              onClick={rehberAc}
+              aria-label="Rehber"
+              className={`${ikonBtn} hidden md:flex`}
+            >
+              ❓
+            </button>
                         <button
               onClick={sezonDegistir}
               aria-label="Cadılar Bayramı modu"
@@ -286,6 +297,9 @@ export default function Navbar() {
             className="fixed right-3 z-50 w-60 overflow-hidden rounded-2xl border border-line bg-card text-sm shadow-xl"
             style={{ top: "calc(env(safe-area-inset-top) + 4.25rem)" }}
           >
+                        <button onClick={rehberAc} className={menuOge}>
+              ❓ Rehber
+            </button>
             <Link href="/oyunlar" className={menuOge}>
               🎮 Oyunlar
             </Link>

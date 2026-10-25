@@ -28,6 +28,7 @@ const ROL_ETIKET: Record<string, string> = {
   admin: "Admin",
   artist: "Sanatçı",
   fan: "Hayran",
+  moderator: "Moderatör",
   magazine: "Magazin",
 };
 
@@ -63,7 +64,7 @@ export default function AdminSayfasi() {
     const { data } = await supabase
       .from("profiles")
       .select("id, username, role")
-      .in("role", ["admin", "artist", "magazine"])
+      .in("role", ["admin", "artist", "magazine", "moderator"])
       .order("role")
       .order("username");
     setYetkililer(data || []);
@@ -310,6 +311,8 @@ export default function AdminSayfasi() {
           >
             <option value="admin">Admin</option>
             <option value="artist">Sanatçı</option>
+            <option value="magazine">Magazin</option>
+            <option value="moderator">Moderatör</option>
             <option value="fan">Hayran (yetkiyi al)</option>
           </select>
           <button

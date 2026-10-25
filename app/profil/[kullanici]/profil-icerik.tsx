@@ -443,7 +443,7 @@ export default function ProfilSayfasi() {
                     @{profil.username}
                     {profil.role !== "fan" && (
                       <span className="ml-2 rounded-full bg-card2 px-2 py-0.5 text-xs text-brand">
-                        {profil.role === "admin" ? "Admin" : profil.role === "magazine" ? "✓ Magazin" : "Sanatçı"}
+                        {profil.role === "admin" ? "Admin" : profil.role === "magazine" ? "✓ Magazin" : profil.role === "moderator" ? "Moderatör" : "Sanatçı"}
                       </span>
                     )}
                     {profil.title && <UnvanRozeti ad={profil.title.name} />}

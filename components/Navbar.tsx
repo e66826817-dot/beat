@@ -17,6 +17,7 @@ export default function Navbar() {
   const [kullaniciId, setKullaniciId] = useState<string | null>(null);
   const [kullaniciAdi, setKullaniciAdi] = useState<string | null>(null);
   const [admin, setAdmin] = useState(false);
+  const [mod, setMod] = useState(false);
   const [okunmamis, setOkunmamis] = useState(0);
   const [tema, setTema] = useState<"dark" | "light">("dark");
   const [menuAcik, setMenuAcik] = useState(false);
@@ -49,6 +50,7 @@ export default function Navbar() {
       if (!uid) {
         setKullaniciAdi(null);
         setAdmin(false);
+        setMod(false);
         setYaptirim(null);
         setOkunmamis(0);
         return;
@@ -60,6 +62,7 @@ export default function Navbar() {
         .single();
       setKullaniciAdi(data?.username ?? null);
       setAdmin(data?.role === "admin");
+      setMod(data?.role === "moderator");
       if (
         data?.restriction &&
         data.restricted_until &&
@@ -326,10 +329,15 @@ export default function Navbar() {
               </Link>
             )}
             {admin && (
-              <Link href="/admin" className={menuOge}>
-                🛡️ Yönetim paneli
-              </Link>
-            )}
+  <Link href="/admin" className={menuOge}>
+    🛡️ Yönetim paneli
+  </Link>
+)}
+{mod && (
+  <Link href="/moderator" className={menuOge}>
+    📋 Moderatör paneli
+  </Link>
+)}
             <button onClick={sezonDegistir} className={menuOge}>
               {sezon ? "🎃 Cadılar Bayramı: açık" : "🕯️ Cadılar Bayramı: kapalı"}
             </button>

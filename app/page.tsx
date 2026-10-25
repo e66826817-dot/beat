@@ -6,6 +6,7 @@ import { createClient } from "../lib/supabase";
 import NotlarSeridi from "../components/NotlarSeridi";
 import DunUnArtisti from "../components/DununArtisti";
 import IlkAdimlar from "../components/IlkAdimlar";
+import GunlukKanca from "../components/GunlukKanca";
 import PostCard, {
   Avatar,
   Gonderi,
@@ -372,8 +373,9 @@ export default function AnaSayfa() {
         </p>
       </Link>
             
-                  <IlkAdimlar kullaniciId={kullaniciId} kullaniciAdi={kullaniciAdi} />
+                  <IlkAdimlar kullaniciId={kullaniciId}
             <NotlarSeridi kullaniciId={kullaniciId} />
+                  <GunlukKanca kullaniciId={kullaniciId} />
                   <DunUnArtisti />
       {gununSorusu && (
         <Link

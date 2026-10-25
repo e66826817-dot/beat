@@ -373,10 +373,10 @@ export default function AnaSayfa() {
         </p>
       </Link>
             
-                  <IlkAdimlar kullaniciId={kullaniciId}
-            <NotlarSeridi kullaniciId={kullaniciId} />
-                  <GunlukKanca kullaniciId={kullaniciId} />
-                  <DunUnArtisti />
+                 <IlkAdimlar kullaniciId={kullaniciId} kullaniciAdi={kullaniciAdi} />
+<NotlarSeridi kullaniciId={kullaniciId} />
+<GunlukKanca kullaniciId={kullaniciId} />
+<DunUnArtisti />
       {gununSorusu && (
         <Link
           href="/soru"

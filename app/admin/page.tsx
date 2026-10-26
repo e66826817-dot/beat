@@ -49,7 +49,7 @@ export default function AdminSayfasi() {
   const [yaptirimlar, setYaptirimlar] = useState<Yaptirim[]>([]);
 
   const [kullanici, setKullanici] = useState("");
-  const [rol, setRol] = useState("admin");
+  useState("moderator")
   const [hata, setHata] = useState("");
   const [basari, setBasari] = useState("");
 
@@ -309,7 +309,6 @@ export default function AdminSayfasi() {
             onChange={(e) => setRol(e.target.value)}
             className={alan}
           >
-            <option value="admin">Admin</option>
             <option value="artist">Sanatçı</option>
             <option value="magazine">Magazin</option>
             <option value="moderator">Moderatör</option>
@@ -342,7 +341,7 @@ export default function AdminSayfasi() {
               <span className="rounded-full bg-card px-2.5 py-0.5 text-xs text-brand">
                 {ROL_ETIKET[y.role] ?? y.role}
               </span>
-              {y.id !== benimId && (
+                            {y.id !== benimId && y.role !== "admin" && (
                 <button
                   onClick={() => rolAta(y.username, "fan")}
                   className="text-xs text-red-400 hover:text-red-300"

@@ -294,8 +294,8 @@ export default function AdminSayfasi() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (kullanici.trim()) rolAta(kullanici, rol);
           }}
+          
           className="flex flex-wrap gap-2"
         >
           <input
@@ -305,8 +305,7 @@ export default function AdminSayfasi() {
             className={`${alan} min-w-0 flex-1`}
           />
           <select
-            value={rol}
-            onChange={(e) => setRol(e.target.value)}
+
             className={alan}
           >
             <option value="artist">Sanatçı</option>

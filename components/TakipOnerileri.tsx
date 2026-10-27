@@ -67,11 +67,11 @@ export default function TakipOnerileri({
     ) : null;
   }
 
-  const kart = (a: Aday) => (
+    const kart = (a: Aday) => (
     <div
       key={a.uid}
-      className={`space-y-2 rounded-2xl bg-card2 p-3 text-center ${
-        liste ? "flex items-center gap-3 text-left" : "w-36 shrink-0"
+      className={`rounded-2xl bg-card2 p-3 text-center ${
+        liste ? "flex items-center gap-3 text-left" : "w-36 shrink-0 space-y-2"
       }`}
     >
       <Link
@@ -96,13 +96,14 @@ export default function TakipOnerileri({
       </Link>
       <button
         onClick={() => takipEt(a)}
-        className="btn-brand w-full rounded-full px-4 py-1.5 text-xs font-semibold"
+        className={`btn-brand rounded-full px-4 py-1.5 text-xs font-semibold ${
+          liste ? "shrink-0" : "w-full"
+        }`}
       >
         Takip et
       </button>
     </div>
   );
-
   if (liste) {
     return (
       <div className="space-y-2">

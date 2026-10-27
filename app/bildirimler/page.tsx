@@ -14,11 +14,14 @@ type Tur =
   | "mention"
   | "title_worn"
   | "video_like"
-  | "video_comment";
+  | "video_comment"
+  | "poll_vote";
 
 type Bildirim = {
   id: string;
   type: Tur;
+  poll_id: string | null;
+  pol: { question: string } | null;
   post_id: string | null;
   ref_id: string | null;
   video_id: string | null;
@@ -42,9 +45,11 @@ const IKONLAR: Record<Tur, string> = {
   title_worn: "✦",
   video_like: "🎬",
   video_comment: "🎬",
+  poll_vote: "📊",
 };
 
 const METINLER: Record<Tur, string> = {
+  poll_vote: "anketine oy verdi",
   like: "gönderine tepki verdi",
   comment: "gönderine yorum yaptı",
   follow: "seni takip etmeye başladı",
@@ -76,7 +81,7 @@ export default function BildirimlerSayfasi() {
       const { data, error } = await supabase
         .from("notifications")
         .select(
-          "id, type, post_id, ref_id, video_id, info, is_read, created_at, profiles!notifications_actor_id_fkey(username), posts!notifications_post_id_fkey(content), ref:posts!notifications_ref_id_fkey(content), vid:videos!notifications_video_id_fkey(caption)"
+          "id, type, post_id, ref_id, video_id, info, is_read, created_at, profiles!notifications_actor_id_fkey(username), posts!notifications_post_id_fkey(content), ref:posts!notifications_ref_id_fkey(content), vid:videos!notifications_video_id_fkey(caption), , pol:polls!notifications_poll_id_fkey(question), poll_id"
         )
         .order("created_at", { ascending: false })
         .limit(50);
@@ -146,26 +151,30 @@ export default function BildirimlerSayfasi() {
       <div className="space-y-2">
         {bildirimler.map((b) => {
           const kisi = b.profiles?.username ?? "bilinmiyor";
-          const videoMu = b.type === "video_like" || b.type === "video_comment";
-          const hedefId = b.type === "quote" && b.ref_id ? b.ref_id : b.post_id;
-          const hedef =
-            b.type === "follow" || b.type === "title_worn"
-              ? `/profil/${kisi}`
-              : videoMu
-              ? b.video_id
-                ? `/videolar?v=${b.video_id}`
-                : "/videolar"
-              : hedefId
-              ? `/gonderi/${hedefId}`
-              : "/";
-          const altMetin =
-            b.type === "title_worn"
-              ? b.info
-              : videoMu
-              ? b.vid?.caption ?? null
-              : b.type === "quote"
-              ? b.ref?.content ?? b.posts?.content ?? null
-              : b.posts?.content ?? null;
+const videoMu = b.type === "video_like" || b.type === "video_comment";
+const hedefId = b.type === "quote" && b.ref_id ? b.ref_id : b.post_id;
+const hedef =
+  b.type === "follow" || b.type === "title_worn"
+    ? `/profil/${kisi}`
+    : b.type === "poll_vote"
+    ? "/anketler"
+    : videoMu
+    ? b.video_id
+      ? `/videolar?v=${b.video_id}`
+      : "/videolar"
+    : hedefId
+    ? `/gonderi/${hedefId}`
+    : "/";
+const altMetin =
+  b.type === "title_worn"
+    ? b.info
+    : b.type === "poll_vote"
+    ? b.pol?.question ?? null
+    : videoMu
+    ? b.vid?.caption ?? null
+    : b.type === "quote"
+    ? b.ref?.content ?? b.posts?.content ?? null
+    : b.posts?.content ?? null;
           return (
             <Link
               key={b.id}
@@ -178,7 +187,9 @@ export default function BildirimlerSayfasi() {
               <div className="min-w-0 flex-1">
                 <p className="text-sm">
                   <span className="font-semibold">@{kisi}</span>{" "}
-                  {METINLER[b.type] ?? "bir işlem yaptı"}
+                                    {b.type === "poll_vote"
+                    ? `anketine oy verdi (toplam ${b.info ?? "?"} oy)`
+                    : METINLER[b.type] ?? "bir işlem yaptı"}
                 </p>
                 {altMetin && (
                   <p className="mt-0.5 truncate text-xs text-muted">

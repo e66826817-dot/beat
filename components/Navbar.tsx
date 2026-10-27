@@ -318,6 +318,9 @@ export default function Navbar() {
               🏆 Liderlik
             </Link>
                         <Link href="/kanallar" className={menuOge}>
+                                    <Link href="/kesfet" className={menuOge}>
+              👥 Keşfet
+            </Link>
               📰 Kanallar
             </Link>
             <Link href="/artist" className={menuOge}>

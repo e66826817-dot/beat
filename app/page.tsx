@@ -7,6 +7,8 @@ import NotlarSeridi from "../components/NotlarSeridi";
 import DunUnArtisti from "../components/DununArtisti";
 import IlkAdimlar from "../components/IlkAdimlar";
 import GunlukKanca from "../components/GunlukKanca";
+import AnasayfaAnket from "../components/AnasayfaAnket";
+import TakipOnerileri from "../components/TakipOnerileri";
 import PostCard, {
   Avatar,
   Gonderi,
@@ -375,6 +377,8 @@ export default function AnaSayfa() {
             
                  <IlkAdimlar kullaniciId={kullaniciId} kullaniciAdi={kullaniciAdi} />
 <NotlarSeridi kullaniciId={kullaniciId} />
+      <AnasayfaAnket kullaniciId={kullaniciId} />
+      <TakipOnerileri kullaniciId={kullaniciId} />
 <GunlukKanca kullaniciId={kullaniciId} />
 <DunUnArtisti />
       {gununSorusu && (

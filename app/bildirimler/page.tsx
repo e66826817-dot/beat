@@ -81,8 +81,8 @@ export default function BildirimlerSayfasi() {
       const { data, error } = await supabase
         .from("notifications")
         .select(
-          "id, type, post_id, ref_id, video_id, info, is_read, created_at, profiles!notifications_actor_id_fkey(username), posts!notifications_post_id_fkey(content), ref:posts!notifications_ref_id_fkey(content), vid:videos!notifications_video_id_fkey(caption), , pol:polls!notifications_poll_id_fkey(question), poll_id"
-        )
+  "id, type, post_id, ref_id, video_id, poll_id, info, is_read, created_at, profiles!notifications_actor_id_fkey(username), posts!notifications_post_id_fkey(content), ref:posts!notifications_ref_id_fkey(content), vid:videos!notifications_video_id_fkey(caption), pol:polls!notifications_poll_id_fkey(question)"
+)
         .order("created_at", { ascending: false })
         .limit(50);
 

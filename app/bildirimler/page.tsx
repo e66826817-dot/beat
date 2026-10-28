@@ -163,8 +163,8 @@ const hedef =
     ? `/profil/${kisi}`
     : b.type === "poll_vote"
     ? "/anketler"
-                  : b.type === "event_reminder"
-              ? "/etkinlikler"
+    : b.type === "event_reminder"
+    ? "/etkinlikler"
     : videoMu
     ? b.video_id
       ? `/videolar?v=${b.video_id}`
@@ -192,21 +192,7 @@ const altMetin =
             >
               <span className="text-2xl">{IKONLAR[b.type] ?? "🔔"}</span>
               <div className="min-w-0 flex-1">
-                                <p className="text-sm">
-                  {b.type === "event_reminder" ? (
-                    <span className="font-semibold">
-                      Katıldığın etkinlik yaklaşık 30 dakika içinde başlıyor
-                    </span>
-                  ) : (
-                    <>
-                      <span className="font-semibold">@{kisi}</span>{" "}
-                      {b.type === "poll_vote"
-                        ? `anketine oy verdi (toplam ${b.info ?? "?"} oy)`
-                        : METINLER[b.type] ?? "bir işlem yaptı"}
-                    </>
-                  )}
-                </p>
-                                 <p className="text-sm">
+                <p className="text-sm">
                   {b.type === "event_reminder" ? (
                     <span className="font-semibold">
                       Katıldığın etkinlik yaklaşık 30 dakika içinde başlıyor
@@ -225,7 +211,7 @@ const altMetin =
                     “{altMetin}”
                   </p>
                 )}
-                                <p className="mt-1 text-xs text-muted">
+                <p className="mt-1 text-xs text-muted">
                   {new Date(b.created_at).toLocaleString("tr-TR")}
                 </p>
               </div>

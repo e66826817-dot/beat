@@ -206,7 +206,7 @@ const altMetin =
                     </>
                   )}
                 </p>
-                                  <p className="text-sm">
+                                 <p className="text-sm">
                   {b.type === "event_reminder" ? (
                     <span className="font-semibold">
                       Katıldığın etkinlik yaklaşık 30 dakika içinde başlıyor
@@ -225,11 +225,9 @@ const altMetin =
                     “{altMetin}”
                   </p>
                 )}
-                
                 <p className="mt-1 text-xs text-muted">
                   {new Date(b.created_at).toLocaleString("tr-TR")}
                 </p>
-              </div>
               {!b.is_read && (
                 <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-brand" />
               )}

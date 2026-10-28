@@ -145,7 +145,8 @@ html[data-season="halloween"] .sezon-kart {
   display: block;
 }
 
-html[data-season="halloween"] .sezon-dekor {
+html[data-season="halloween"] .sezon-dekor,
+html[data-season="cumhuriyet"] .sezon-dekor {
   display: block;
   position: fixed;
   inset: 0;
@@ -154,7 +155,7 @@ html[data-season="halloween"] .sezon-dekor {
   pointer-events: none;
 }
 
-.sezon-dekor span {
+.sezon-dekor > span {
   position: absolute;
   top: -3rem;
   font-size: 1.4rem;
@@ -172,7 +173,40 @@ html[data-season="halloween"] .sezon-dekor {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html[data-season="halloween"] .sezon-dekor {
+  html[data-season="halloween"] .sezon-dekor,
+  html[data-season="cumhuriyet"] .sezon-dekor {
     display: none;
   }
+  }
+
+/* ===== 29 EKİM CUMHURİYET BAYRAMI ===== */
+:root[data-season="cumhuriyet"][data-theme="dark"] {
+  --page: #14060a;
+  --card: #240b11;
+  --card2: #35121b;
+  --line: #5c1f2b;
+  --ink: #fff6f6;
+  --muted: #e2b4ba;
+  --brand: #e30a17;
+  --brand2: #ff5560;
+}
+
+:root[data-season="cumhuriyet"][data-theme="light"] {
+  --page: #fff6f6;
+  --card: #ffffff;
+  --card2: #ffe6e8;
+  --line: #f5c3c8;
+  --ink: #3a0a0e;
+  --muted: #8a5a60;
+  --brand: #e30a17;
+  --brand2: #b00812;
+}
+
+.dekor-hw,
+.dekor-cum {
+  display: none;
+}
+html[data-season="halloween"] .dekor-hw,
+html[data-season="cumhuriyet"] .dekor-cum {
+  display: inline;
 }

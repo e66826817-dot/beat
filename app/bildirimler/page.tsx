@@ -225,11 +225,7 @@ const altMetin =
                     “{altMetin}”
                   </p>
                 )}
-                {altMetin && (
-                  <p className="mt-0.5 truncate text-xs text-muted">
-                    “{altMetin}”
-                  </p>
-                )}
+                
                 <p className="mt-1 text-xs text-muted">
                   {new Date(b.created_at).toLocaleString("tr-TR")}
                 </p>

@@ -264,7 +264,7 @@ export default function GorevlerSayfasi() {
         <div>
           <h2 className="text-2xl font-extrabold">🎯 Görevler</h2>
           <p className="mt-1 text-sm opacity-90">
-            Aşamaları sırayla tamamla, ödülleri kazan; sonra günlük görevlere geç.
+                        Günlük görevlerle her gün puan kazan, aşamaları tamamlayarak çerçeve, tema ve ünvan aç.
           </p>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">

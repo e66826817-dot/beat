@@ -15,7 +15,8 @@ type Tur =
   | "title_worn"
   | "video_like"
   | "video_comment"
-  | "poll_vote";
+  | "poll_vote"
+  | "event_reminder";
 
 type Bildirim = {
   id: string;
@@ -29,12 +30,15 @@ type Bildirim = {
   is_read: boolean;
   created_at: string;
   profiles: { username: string } | null;
+  event_id: string | null;
+  ev: { title: string } | null;
   posts: { content: string | null } | null;
   ref: { content: string | null } | null;
   vid: { caption: string | null } | null;
 };
 
 const IKONLAR: Record<Tur, string> = {
+  event_reminder: "📅",
   like: "♥",
   comment: "💬",
   follow: "👤",
@@ -49,6 +53,7 @@ const IKONLAR: Record<Tur, string> = {
 };
 
 const METINLER: Record<Tur, string> = {
+  event_reminder: "etkinliğin yaklaşıyor",
   poll_vote: "anketine oy verdi",
   like: "gönderine tepki verdi",
   comment: "gönderine yorum yaptı",
@@ -81,7 +86,7 @@ export default function BildirimlerSayfasi() {
       const { data, error } = await supabase
         .from("notifications")
         .select(
-  "id, type, post_id, ref_id, video_id, poll_id, info, is_read, created_at, profiles!notifications_actor_id_fkey(username), posts!notifications_post_id_fkey(content), ref:posts!notifications_ref_id_fkey(content), vid:videos!notifications_video_id_fkey(caption), pol:polls!notifications_poll_id_fkey(question)"
+  "id, type, post_id, ref_id, video_id, poll_id, info, is_read, created_at, profiles!notifications_actor_id_fkey(username), posts!notifications_post_id_fkey(content), ref:posts!notifications_ref_id_fkey(content), vid:videos!notifications_video_id_fkey(caption), pol:polls!notifications_poll_id_fkey(question), , event_id, ev:events!notifications_event_id_fkey(title)"
 )
         .order("created_at", { ascending: false })
         .limit(50);
@@ -158,6 +163,8 @@ const hedef =
     ? `/profil/${kisi}`
     : b.type === "poll_vote"
     ? "/anketler"
+                  : b.type === "event_reminder"
+              ? "/etkinlikler"
     : videoMu
     ? b.video_id
       ? `/videolar?v=${b.video_id}`
@@ -185,12 +192,39 @@ const altMetin =
             >
               <span className="text-2xl">{IKONLAR[b.type] ?? "🔔"}</span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm">
-                  <span className="font-semibold">@{kisi}</span>{" "}
-                                    {b.type === "poll_vote"
-                    ? `anketine oy verdi (toplam ${b.info ?? "?"} oy)`
-                    : METINLER[b.type] ?? "bir işlem yaptı"}
+                                <p className="text-sm">
+                  {b.type === "event_reminder" ? (
+                    <span className="font-semibold">
+                      Katıldığın etkinlik yaklaşık 30 dakika içinde başlıyor
+                    </span>
+                  ) : (
+                    <>
+                      <span className="font-semibold">@{kisi}</span>{" "}
+                      {b.type === "poll_vote"
+                        ? `anketine oy verdi (toplam ${b.info ?? "?"} oy)`
+                        : METINLER[b.type] ?? "bir işlem yaptı"}
+                    </>
+                  )}
                 </p>
+                                  <p className="text-sm">
+                  {b.type === "event_reminder" ? (
+                    <span className="font-semibold">
+                      Katıldığın etkinlik yaklaşık 30 dakika içinde başlıyor
+                    </span>
+                  ) : (
+                    <>
+                      <span className="font-semibold">@{kisi}</span>{" "}
+                      {b.type === "poll_vote"
+                        ? `anketine oy verdi (toplam ${b.info ?? "?"} oy)`
+                        : METINLER[b.type] ?? "bir işlem yaptı"}
+                    </>
+                  )}
+                </p>
+                {altMetin && (
+                  <p className="mt-0.5 truncate text-xs text-muted">
+                    “{altMetin}”
+                  </p>
+                )}
                 {altMetin && (
                   <p className="mt-0.5 truncate text-xs text-muted">
                     “{altMetin}”

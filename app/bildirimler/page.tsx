@@ -225,9 +225,10 @@ const altMetin =
                     “{altMetin}”
                   </p>
                 )}
-                <p className="mt-1 text-xs text-muted">
+                                <p className="mt-1 text-xs text-muted">
                   {new Date(b.created_at).toLocaleString("tr-TR")}
                 </p>
+              </div>
               {!b.is_read && (
                 <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-brand" />
               )}

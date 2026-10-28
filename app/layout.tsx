@@ -21,7 +21,7 @@ export const viewport: Viewport = {
 
 const temaBetigi = `(function(){try{var t=localStorage.getItem('beat-tema');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}catch(e){document.documentElement.setAttribute('data-theme','dark')}})()`;
 
-const sezonBetigi = `(function(){try{var s=localStorage.getItem('beat-sezon');var d=new Date();var m=d.getMonth(),g=d.getDate();var c=(m===9&&g===29&&s!=='0');var a=(m===9&&g>=15)||(m===10&&g<=2);if(s==='cumhuriyet'||c){document.documentElement.setAttribute('data-season','cumhuriyet')}else if(s==='1'||(s===null&&a)){document.documentElement.setAttribute('data-season','halloween')}}catch(e){}})()`;
+const sezonBetigi = `(function(){try{var s=localStorage.getItem('beat-sezon');var d=new Date();var m=d.getMonth(),g=d.getDate();var c=(m===9&&g===29&&s===null);var a=(m===9&&g>=15)||(m===10&&g<=2);if(s==='cumhuriyet'||c){document.documentElement.setAttribute('data-season','cumhuriyet')}else if(s==='1'||(s===null&&a)){document.documentElement.setAttribute('data-season','halloween')}}catch(e){}})()`;
 
 const DEKOR = [
   { e: "🦇", c: "⭐", sol: "8%", sure: "17s", gecikme: "0s" },

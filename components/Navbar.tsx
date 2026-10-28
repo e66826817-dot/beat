@@ -21,7 +21,7 @@ export default function Navbar() {
   const [okunmamis, setOkunmamis] = useState(0);
   const [tema, setTema] = useState<"dark" | "light">("dark");
   const [menuAcik, setMenuAcik] = useState(false);
-    const [sezon, setSezon] = useState(false);
+  const [sezon, setSezon] = useState<string | null>(null)
   const [yaptirim, setYaptirim] = useState<Yaptirim | null>(null);
 
   async function sayiGetir(uid: string | null) {
@@ -38,7 +38,7 @@ export default function Navbar() {
   }
 
   useEffect(() => {
-        setSezon(document.documentElement.getAttribute("data-season") === "halloween");
+       setSezon(document.documentElement.getAttribute("data-season"));
     setTema(
       document.documentElement.getAttribute("data-theme") === "light"
         ? "light"
@@ -110,14 +110,18 @@ export default function Navbar() {
   }, [pathname, kullaniciId]);
 
     function sezonDegistir() {
-    const yeni = !sezon;
-    setSezon(yeni);
-    if (yeni) document.documentElement.setAttribute("data-season", "halloween");
-    else document.documentElement.removeAttribute("data-season");
-    try {
-      localStorage.setItem("beat-sezon", yeni ? "1" : "0");
-    } catch {}
-  }
+  const sira = [null, "halloween", "cumhuriyet"];
+  const yeni = sira[(sira.indexOf(sezon) + 1) % sira.length];
+  setSezon(yeni);
+  if (yeni) document.documentElement.setAttribute("data-season", yeni);
+  else document.documentElement.removeAttribute("data-season");
+  try {
+    localStorage.setItem(
+      "beat-sezon",
+      yeni === "halloween" ? "1" : yeni === "cumhuriyet" ? "cumhuriyet" : "0"
+    );
+  } catch {}
+}
     function rehberAc() {
     setMenuAcik(false);
     window.dispatchEvent(new Event("rehber-ac"));
@@ -240,13 +244,13 @@ export default function Navbar() {
             >
               ❓
             </button>
-                        <button
-              onClick={sezonDegistir}
-              aria-label="Cadılar Bayramı modu"
-              className={`${ikonBtn} hidden md:flex`}
-            >
-              {sezon ? "🎃" : "🕯️"}
-            </button>
+            <button onClick={sezonDegistir} className={menuOge}>
+  {sezon === "halloween"
+    ? "🎃 Tema: Cadılar Bayramı"
+    : sezon === "cumhuriyet"
+    ? "⭐ Tema: 29 Ekim"
+    : "🕯️ Tema: kapalı"}
+</button>
             <button
               onClick={temaDegistir}
               aria-label="Temayı değiştir"
@@ -318,12 +322,12 @@ export default function Navbar() {
               🏆 Liderlik
             </Link>
                         <Link href="/kanallar" className={menuOge}>
-                                    <Link href="/kesfet" className={menuOge}>
-              👥 Keşfet
-            </Link>
-              📰 Kanallar
-            </Link>
-            <Link href="/artist" className={menuOge}>
+              <Link href="/kesfet" className={menuOge}>
+  👥 Keşfet
+</Link>
+<Link href="/kanallar" className={menuOge}>
+  📰 Kanallar
+</Link>
               ⭐ Günün artisti
             </Link>
             {kullaniciAdi && (
@@ -341,12 +345,13 @@ export default function Navbar() {
     📋 Moderatör paneli
   </Link>
 )}
-            <button onClick={sezonDegistir} className={menuOge}>
-              {sezon ? "🎃 Cadılar Bayramı: açık" : "🕯️ Cadılar Bayramı: kapalı"}
-            </button>
-            <button onClick={temaDegistir} className={menuOge}>
-              {tema === "dark" ? "☀️ Açık tema" : "🌙 Koyu tema"}
-            </button>
+           <button
+  onClick={sezonDegistir}
+  aria-label="Sezon teması"
+  className={`${ikonBtn} hidden md:flex`}
+>
+  {sezon === "halloween" ? "🎃" : sezon === "cumhuriyet" ? "⭐" : "🕯️"}
+</button>
             {kullaniciAdi ? (
               <button onClick={cikisYap} className={`${menuOge} text-red-400`}>
                 Çıkış yap
